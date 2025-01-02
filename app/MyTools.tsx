@@ -1,11 +1,12 @@
-import { Image , Pressable , SafeAreaView, StyleSheet, ScrollView ,View, Text,TextInput, TouchableOpacity} from 'react-native';
+import { Image , SafeAreaView, StyleSheet, ScrollView ,View, Text,TextInput, TouchableOpacity} from 'react-native';
 import { SQLiteProvider, useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
 import { useEffect, useState, useRef } from 'react';
 
-export default function HomeScreen() {
+export default function MyTools() {
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
         <SQLiteProvider databaseName="tom.db" onInit={migrateDbIfNeeded}>
+          <Text>Home</Text>
             <Content />
           </SQLiteProvider>
     </ScrollView>
@@ -18,6 +19,9 @@ interface Todo {
 }
 
 export function Content() {
+
+  const titleInputRef = useRef<TextInput>(null);
+  const bodyInputRef = useRef<TextInput>(null);
 
   interface Tool {
     id: number;
@@ -85,33 +89,35 @@ export function Content() {
         <View style={styles.container}>
           <View style={styles.form}>
             <TextInput
-            
+              ref={titleInputRef}
               style={styles.inputWrap}
               value={newToolTitle}
               onChangeText={setNewToolTitle}
               placeholder="Title"
             />
             <TextInput
-            
+              ref={bodyInputRef}
               style={[styles.inputWrap, styles.textArea]}
               value={newToolBody}
               onChangeText={setNewToolBody}
               placeholder="Body"
               multiline
             />
-            <Pressable 
+            <TouchableOpacity
               style={styles.customButton}
               onPress={() => {
+                titleInputRef.current?.blur();
+                bodyInputRef.current?.blur();
+
                 if (editingTool) {
                   saveEditedTool();
                 } else {
                   createNewTool();
                 }
-               
               }}
             >
               <Text style={styles.buttonText}>{editingTool ? 'Save Changes' : 'Save'}</Text>
-            </Pressable>
+            </TouchableOpacity>
           </View>
             <View>
               {mytools.map((tool, index) => (
@@ -119,10 +125,10 @@ export function Content() {
                   <View style={styles.toolItem}>
                     <View style={styles.toolActions}>
                       <TouchableOpacity onPress={() => deleteTool(tool.id)}>
-                        <Image source={require('../../assets/images/trash.png')} style={styles.actionIcon} />
+                        <Image source={require('../assets/images/trash.png')} style={styles.actionIcon} />
                       </TouchableOpacity>
                       <TouchableOpacity onPress={() => startEditing(tool)}>
-                        <Image source={require('../../assets/images/edit.png')} style={styles.actionIcon} />
+                        <Image source={require('../assets/images/edit.png')} style={styles.actionIcon} />
                       </TouchableOpacity>
                     </View>
                     <Text style={styles.toolText}>
@@ -251,5 +257,8 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     marginHorizontal: 3,
+  },
+  scrollView:{
+    padding:0,
   },
 });
