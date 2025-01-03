@@ -1,27 +1,16 @@
 import { Image , SafeAreaView, StyleSheet, ScrollView ,View, Text,TextInput, TouchableOpacity} from 'react-native';
-import { SQLiteProvider, useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
+import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState, useRef } from 'react';
 
 export default function MyTools() {
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
-        <SQLiteProvider databaseName="tom.db" onInit={migrateDbIfNeeded}>
-          <Text>Home</Text>
-            <Content />
-          </SQLiteProvider>
+      <Content />
     </ScrollView>
   );
 }
 
-interface Todo {
-  value: string;
-  intValue: number;
-}
-
 export function Content() {
-
-  const titleInputRef = useRef<TextInput>(null);
-  const bodyInputRef = useRef<TextInput>(null);
 
   interface Tool {
     id: number;
@@ -89,14 +78,12 @@ export function Content() {
         <View style={styles.container}>
           <View style={styles.form}>
             <TextInput
-              ref={titleInputRef}
               style={styles.inputWrap}
               value={newToolTitle}
               onChangeText={setNewToolTitle}
               placeholder="Title"
             />
             <TextInput
-              ref={bodyInputRef}
               style={[styles.inputWrap, styles.textArea]}
               value={newToolBody}
               onChangeText={setNewToolBody}
@@ -106,9 +93,6 @@ export function Content() {
             <TouchableOpacity
               style={styles.customButton}
               onPress={() => {
-                titleInputRef.current?.blur();
-                bodyInputRef.current?.blur();
-
                 if (editingTool) {
                   saveEditedTool();
                 } else {
@@ -142,32 +126,6 @@ export function Content() {
       </SafeAreaView>
       
   );
-}
-
-
-
-
-async function migrateDbIfNeeded(db: SQLiteDatabase) {
-  const DATABASE_VERSION = 1;
-  let { user_version: currentDbVersion } = await db.getFirstAsync<{ user_version: number }>(
-    'PRAGMA user_version'
-  );
-  if (currentDbVersion >= DATABASE_VERSION) {
-    return;
-  }
-  if (currentDbVersion === 0) {
-    await db.execAsync(`
-  PRAGMA journal_mode = 'wal';
-  CREATE TABLE mytools (id INTEGER PRIMARY KEY NOT NULL, title TEXT NOT NULL, body TEXT NOT NULL);
-  `);
-    await db.runAsync('INSERT INTO mytools (title, body) VALUES (?, ?)', 'title1', 'body1');
-    await db.runAsync('INSERT INTO mytools (title, body) VALUES (?, ?)', 'title2', 'body2');
-    currentDbVersion = 1;
-  }
-  // if (currentDbVersion === 1) {
-  //   Add more migrations
-  // }
-  await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
 
 const styles = StyleSheet.create({
@@ -258,7 +216,8 @@ const styles = StyleSheet.create({
     height: 20,
     marginHorizontal: 3,
   },
-  scrollView:{
-    padding:0,
+  scrollView: {
+    padding: 16,
+    backgroundColor: '#F3EFF0',
   },
 });

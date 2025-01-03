@@ -1,4 +1,5 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { SQLiteProvider, useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
 import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -74,27 +75,51 @@ const Layout = () => {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      {!isFirstTime && (
-        <Tab.Navigator
-          screenOptions={{
-            tabBarStyle: styles.tabBar,
-            tabBarActiveTintColor: '#bf4da2',
-            tabBarInactiveTintColor: '#6F5D6A',
-            headerStyle: styles.header,
-            headerTintColor: '#6F5D6A',
-            headerTitleStyle: styles.headerTitle,
-          }}
-        >
-          <Tab.Screen name="Home" component={HomeScreen} />
-          <Tab.Screen name="Graph" component={GraphScreen} />
-          <Tab.Screen name="Tips" component={TipsNavigator} options={{ headerShown: false }} />
-          <Tab.Screen name="MyTools" component={MyToolsScreen} />
-        </Tab.Navigator>
-      )}
+      <SQLiteProvider databaseName="tom.db" onInit={migrateDbIfNeeded}>
+        {!isFirstTime && (
+          <Tab.Navigator
+            screenOptions={{
+              tabBarStyle: styles.tabBar,
+              tabBarActiveTintColor: '#bf4da2',
+              tabBarInactiveTintColor: '#6F5D6A',
+              headerStyle: styles.header,
+              headerTintColor: '#6F5D6A',
+              headerTitleStyle: styles.headerTitle,
+            }}
+          >
+            <Tab.Screen name="Home" component={HomeScreen} />
+            <Tab.Screen name="Graph" component={GraphScreen} />
+            <Tab.Screen name="Tips" component={TipsNavigator} options={{ headerShown: false }} />
+            <Tab.Screen name="MyTools" component={MyToolsScreen} />
+          </Tab.Navigator>
+        )}
+      </SQLiteProvider>
     </ThemeProvider>
 
   );
 };
+
+async function migrateDbIfNeeded(db: SQLiteDatabase) {
+  const DATABASE_VERSION = 1;
+  let { user_version: currentDbVersion } = await db.getFirstAsync<{ user_version: number }>(
+    'PRAGMA user_version'
+  );
+  if (currentDbVersion >= DATABASE_VERSION) {
+    return;
+  }
+  if (currentDbVersion === 0) {
+    await db.execAsync(`
+    PRAGMA journal_mode = 'wal';
+    CREATE TABLE IF NOT EXISTS mytools (id INTEGER PRIMARY KEY NOT NULL, title TEXT NOT NULL, body TEXT NOT NULL);
+    `);
+    await db.execAsync(`
+      PRAGMA journal_mode = 'wal';
+      CREATE TABLE IF NOT EXISTS thoughts (id INTEGER PRIMARY KEY NOT NULL, level INTEGER NOT NULL, created DATETIME DEFAULT CURRENT_TIMESTAMP);
+      `);
+    currentDbVersion = 1;
+  }
+  await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
+}
 
 const styles = StyleSheet.create({
   tabBar: {

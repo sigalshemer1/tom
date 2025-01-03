@@ -1,104 +1,138 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Dimensions } from 'react-native';
-import DatePicker from 'react-native-date-picker'; 
-import { BarChart } from 'react-native-chart-kit'; 
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions, ScrollView , SafeAreaView} from 'react-native';
+import { useSQLiteContext } from 'expo-sqlite';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { LineChart  } from 'react-native-chart-kit'; 
 
 const screenWidth = Dimensions.get('window').width; 
 
 const Graph = () => {
-  // const [thoughts, setThoughts] = useState([]);
-  // const [selectedDate, setSelectedDate] = useState(new Date());
+   return (
+      <ScrollView contentContainerStyle={styles.scrollView}>
+            <Content />
+      </ScrollView>
+    );
+  };
 
-  // useEffect(() => {
-  //   const fetchThoughts = async () => {
-  //     if (selectedDate) {
-  //       const startDate = new Date(selectedDate);
-  //       const endDate = new Date(selectedDate);
+  export function Content() {
+    interface Tought {
+      id: number;
+      level: number;
+      created: Date;
+    }
 
-  //       startDate.setHours(0, 0, 0, 0);
-  //       endDate.setHours(23, 59, 59, 999);
+    const [thoughts, setThoughts] = useState<Tought[]>([]);
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  
+    const handleDateChange = (event, date) => {
+      setDatePickerVisibility(false);
+      if (date) setSelectedDate(date);
+    };
+  
 
-  //       try {
-  //         const fetchedThoughts = await getThoughtsByDate(
-  //           startDate.toISOString(),
-  //           endDate.toISOString()
-  //         );
-  //         setThoughts(fetchedThoughts); // Update state with fetched data
-  //       } catch (error) {
-  //         console.error('Error fetching thoughts:', error);
-  //         setThoughts([]); // Clear data on error
-  //       }
-  //     }
-  //   };
+      // Prepare chart data
+    const chartData = {
+      labels: thoughts.map((item) => item.created.split('-').slice(1).join('/')),
+      datasets: [
+        {
+          data: thoughts.map((item) => item.level),
+          colors: (opacity = 1) =>
+            thoughts.map((item) => (item.level > 3 ? `rgba(219, 3, 99, ${opacity})` : `rgba(144, 200, 94, ${opacity})`)),
+        },
+      ],
+    }; 
 
-  //   fetchThoughts();
-  // }, [selectedDate]);
+    useEffect(() => {
+      const fetchThoughts = async () => {
+        if (selectedDate) {
+          const startDate = new Date(selectedDate);
+          const endDate = new Date(selectedDate);
+  
+          startDate.setHours(0, 0, 0, 0);
+          endDate.setHours(23, 59, 59, 999);
+  
+          try {
+            const result = await getThoughtsByDate(startDate.toISOString(), endDate.toISOString());
+            setThoughts(result);
+          } catch (error) {
+            console.error('Error fetching thoughts:', error);
+            setThoughts([]); 
+          }
+        }
+      };
+      fetchThoughts();
+    }, [selectedDate]);
+  
+    return(
+      <SafeAreaView>
+           <View style={styles.container}>
+            <Text style={styles.title}>Your Thinking Graph</Text>
+            <View style={styles.description}>
+              <Text>The daily graph shows the intensity of your thoughts, by date.</Text>
+            </View>
+            {/* Date Picker */}
+             <TouchableOpacity onPress={() => setDatePickerVisibility(true)} style={styles.customButton}>
+                <Text style={styles.buttonText}>
+                  Select Date
+                </Text>
+            </TouchableOpacity>
+            {isDatePickerVisible && (
+              <DateTimePicker
+                value={selectedDate}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleDateChange}
+              />
+            )}
+            <View style={styles.chartContainer}>
+              {thoughts.length === 0 ? (
+                <Text style={styles.noDataText}>No records to show</Text>
+              ) : (
+                <LineChart
+                  data={chartData}
+                  width={screenWidth - 40} // Responsive width
+                  height={220}
+                  fromZero
+                  chartConfig={{
+                    backgroundColor: '#f9f9f9',
+                    backgroundGradientFrom: '#ffffff',
+                    backgroundGradientTo: '#f9f9f9',
+                    decimalPlaces: 0,
+                    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                    style: {
+                      borderRadius: 16,
+                    },
+                  }}
+                  style={styles.chart}
+                />
+              )}
+            </View>
+          </View>
+      </SafeAreaView>
+    );
+  }
 
-  // // Prepare chart data
-  // const chartData = {
-  //   labels: thoughts.map((item) => item.date.split('-').slice(1).join('/')),
-  //   datasets: [
-  //     {
-  //       data: thoughts.map((item) => item.level),
-  //       colors: (opacity = 1) =>
-  //         thoughts.map((item) => (item.level > 3 ? `rgba(219, 3, 99, ${opacity})` : `rgba(144, 200, 94, ${opacity})`)),
-  //     },
-  //   ],
-  // };
-
-  // return (
-  //   <View style={styles.container}>
-  //     <Text style={styles.title}>Your Thinking Graph</Text>
-  //     <View style={styles.description}>
-  //       <Text>The daily graph shows the intensity of your thoughts, by date.</Text>
-  //     </View>
-  //     {/* Date Picker */}
-  //     <DatePicker
-  //       date={selectedDate}
-  //       onDateChange={(date) => setSelectedDate(date)}
-  //       mode="date"
-  //       style={styles.datePicker}
-  //     />
-  //     <View style={styles.chartContainer}>
-  //       {thoughts.length === 0 ? (
-  //         <Text style={styles.noDataText}>No records to show</Text>
-  //       ) : (
-  //         <BarChart
-  //           data={chartData}
-  //           width={screenWidth - 40} // Responsive width
-  //           height={220}
-  //           fromZero
-  //           chartConfig={{
-  //             backgroundColor: '#f9f9f9',
-  //             backgroundGradientFrom: '#ffffff',
-  //             backgroundGradientTo: '#f9f9f9',
-  //             decimalPlaces: 0,
-  //             color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-  //             labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-  //           }}
-  //           style={styles.chart}
-  //         />
-  //       )}
-  //     </View>
-  //     <View style={styles.listContainer}>
-  //       <Text style={styles.subtitle}>Thoughts Table (Debug)</Text>
-  //       <FlatList
-  //         data={thoughts}
-  //         keyExtractor={(item, index) => index.toString()}
-  //         renderItem={({ item }) => (
-  //           <View style={styles.listItem}>
-  //             <Text>Date: {item.date}</Text>
-  //             <Text>Level: {item.level}</Text>
-  //           </View>
-  //         )}
-  //       />
-  //     </View>
-  //   </View>
-  // );
-  return (<View>Graph</View>);
-};
+  //Fetch the specified dates info
+  export const getThoughtsByDate = async (startDate, endDate) => {
+    try {
+      const db = useSQLiteContext();
+      const result = await db.getAllAsync('SELECT * FROM thoughts WHERE created BETWEEN ? AND ?;',
+            [startDate, endDate]);
+      return result;
+    } catch (error) {
+      console.error('Error in getThoughtsByDate:', error);
+      throw error;
+    }
+  };
+  
 
 const styles = StyleSheet.create({
+  scrollView: {
+    padding: 16,
+    backgroundColor: '#F3EFF0',
+  },
   container: {
     flex: 1,
     padding: 20,
@@ -141,6 +175,25 @@ const styles = StyleSheet.create({
   chart: {
     marginVertical: 10,
     borderRadius: 10,
+  },
+  customButton: {
+    backgroundColor: '#bf4da2',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

@@ -1,13 +1,124 @@
-
 import React, { useEffect, useState } from 'react';
-import { TouchableOpacity, ScrollView, View, Text, StyleSheet, Linking } from 'react-native';
+import { useSQLiteContext } from 'expo-sqlite';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { TouchableOpacity, FlatList, TextInput, ScrollView, View, Text, StyleSheet, Linking, Platform } from 'react-native';
 
 const Home = () => {
+  interface Thought {
+    id: number;
+    level: number;
+    created: Date;
+  }
+
+  const [thoughts, setThoughts] = useState<Thought[]>([]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [level, setLevel] = useState('');
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
+
+  const db = useSQLiteContext();
+
+  useEffect(() => {
+    const fetchThoughts = async () => {
+      if (selectedDate) {
+        const startDate = new Date(selectedDate);
+        const endDate = new Date(selectedDate);
+
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+
+        try {
+          const result = await db.getAllAsync('SELECT * FROM thoughts');
+          setThoughts(result);
+        } catch (error) {
+          console.error('Error fetching thoughts:', error);
+          setThoughts([]);
+        }
+      }
+    };
+
+    fetchThoughts();
+  }, [selectedDate, db]);
+
+  const insertThought = async () => {
+    try {
+      const formattedDate = selectedDate.toISOString();
+      const result = await db.runAsync('INSERT INTO thoughts (level,created) VALUES (?,?)', level, formattedDate);
+      setLevel('');
+      setSelectedDate(new Date());
+    } catch (error) {
+      console.error('Error in insertThought:', error);
+    }
+  };
+
+  const handleDateChange = (event, date) => {
+    setDatePickerVisibility(false);
+    if (date) setSelectedDate(date);
+  };
+
+  const handleTimeChange = (event, date) => {
+    setTimePickerVisibility(false);
+    if (date) setSelectedDate(date);
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
+      <View>
+        {/* Date Picker */}
+        <TouchableOpacity onPress={() => setDatePickerVisibility(true)} style={styles.customButton}>
+          <Text style={styles.buttonText}>
+            Select Date: {selectedDate.toDateString()}
+          </Text>
+        </TouchableOpacity>
+        {isDatePickerVisible && (
+          <DateTimePicker
+            value={selectedDate}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={handleDateChange}
+          />
+        )}
+
+        {/* Time Picker */}
+        <TouchableOpacity onPress={() => setTimePickerVisibility(true)} style={styles.customButton}>
+          <Text style={styles.buttonText}>
+            Select Time: {selectedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </Text>
+        </TouchableOpacity>
+        {isTimePickerVisible && (
+          <DateTimePicker
+            value={selectedDate}
+            mode="time"
+            is24Hour={true}
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={handleTimeChange}
+          />
+        )}
+
+        {/* Input for Level */}
+        <View>
+          <TextInput
+            value={level}
+            onChangeText={setLevel}
+            placeholder="Level"
+            style={styles.inputWrap}
+          />
+          <TouchableOpacity onPress={insertThought} style={styles.customButton}>
+            <Text style={styles.buttonText}>Save Thought</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Debug Table */}
+        <Text>Thoughts Table (Debug)</Text>
+        {thoughts.map((item, index) => (
+          <View key={index}>
+            <Text>Level: {item.level} - {new Date(item.created).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
+          </View>
+        ))}
+      </View>
+
       <View style={styles.bodyContainer}>
         <Text style={styles.heading}>Welcome</Text>
-
         <View style={styles.textContainer}>
           <Text style={styles.normalText}>
             Welcome to <Text style={styles.boldText}>ThinkOmeter</Text>, where you will learn your thought’s patterns.
@@ -26,9 +137,7 @@ const Home = () => {
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.customButton}
-            onPress={() =>
-              Linking.openURL('https://www.youtube.com/embed/yaahVCL9Cdw?si=8mWHmYz4JyOufMrh')
-            }
+            onPress={() => Linking.openURL('https://www.youtube.com/embed/yaahVCL9Cdw?si=8mWHmYz4JyOufMrh')}
           >
             <Text style={styles.buttonText}>Watch Introduction Video</Text>
           </TouchableOpacity>
@@ -83,11 +192,25 @@ const styles = StyleSheet.create({
     elevation: 5,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 10,
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  inputWrap: {
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 7,
+    backgroundColor: '#FFFBFC',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+    marginTop: 6,
+    padding: 10,
   },
 });
 
