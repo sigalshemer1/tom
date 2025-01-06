@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions, SafeAreaView, Modal } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Calendar } from 'react-native-calendars';
 import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg';
 
 const screenWidth = Dimensions.get('window').width;
@@ -23,6 +24,7 @@ export function Content() {
 
   const [thoughts, setThoughts] = useState<Thought[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [highlightedDates, setHighlightedDates] = useState({});
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isTimePickerVisible, setTimePickerVisibility] = useState(false); 
   const [tooltip, setTooltip] = useState<{ x: number; y: number; value: string } | null>(null);
@@ -67,6 +69,11 @@ export function Content() {
     fetchThoughts();
   }, [selectedDate]);
 
+
+  useEffect(() => {
+    fetchAllThoughts(); 
+  }, []);
+
   const getThoughtsByDate = async (startDate, endDate) => {
     try {
       const result = await db.getAllAsync(
@@ -80,10 +87,62 @@ export function Content() {
     }
   };
 
+  const fetchAllThoughts = async () => {
+    try {
+      const result = await db.getAllAsync('SELECT * FROM thoughts;'); // Fetch all thoughts
+      updateHighlightedDates(result); // Update highlighted dates for all available data
+    } catch (error) {
+      console.error('Error fetching all thoughts:', error);
+    }
+  };
+  
+
+  const CustomDatePicker = ({ isVisible, onClose, onDateSelect, markedDates }) => {
+    return (
+      <Modal
+        transparent={true}
+        visible={isVisible}
+        animationType="fade"
+        onRequestClose={onClose} // Handle close when back button is pressed (Android)
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Calendar
+              markedDates={markedDates}
+              onDayPress={(day) => {
+                onDateSelect(new Date(day.dateString)); // Trigger date selection logic
+                onClose(); // Close the calendar modal
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+  
+
+  // Function to update highlighted dates
+  const updateHighlightedDates = (data) => {
+    const highlighted = data.reduce((acc, item) => {
+      const date = item.created.split('T')[0];
+      if (!acc[date]) { // Avoid redundant updates
+        acc[date] = { selected: true, marked: true, selectedColor: '#715868' };
+      }
+      return acc;
+    }, {});
+  
+    setHighlightedDates((prev) => {
+      if (JSON.stringify(prev) !== JSON.stringify(highlighted)) {
+        return highlighted; // Update only if there's a difference
+      }
+      return prev; // No update needed
+    });
+  };
+  
+
   const graphWidth = screenWidth - 40;
   const graphHeight = 250;
   const padding = 40;
-  
 
   const points = thoughts.map((thought, index) => {
     const x = (index / (thoughts.length - 1)) * (graphWidth - padding * 2) + padding;
@@ -114,7 +173,9 @@ export function Content() {
     })
     .join(' ');
 
-   
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString('en-GB'); // This formats the date as dd/MM/yyyy
+    };
 
   return (
     <SafeAreaView style={styles.safeAreaView}>
@@ -134,11 +195,11 @@ export function Content() {
         </TouchableOpacity>
 
         {isDatePickerVisible && (
-          <DateTimePicker
-            value={selectedDate}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={handleDateChange}
+          <CustomDatePicker
+            isVisible={isDatePickerVisible}
+            onClose={() => setDatePickerVisibility(false)}
+            onDateSelect={(date) => setSelectedDate(date)}
+            markedDates={highlightedDates}
           />
         )}
         
@@ -198,7 +259,7 @@ export function Content() {
                       strokeWidth={1}
                       strokeDasharray="4 4"
                     />
-                    <Circle cx={tooltip.x} cy={tooltip.y} r={6} fill="red" />
+                    <Circle cx={tooltip.x} cy={tooltip.y-4} r={6} fill="red" />
                   </>
                 )}
               </Svg>
@@ -219,6 +280,10 @@ export function Content() {
               )}
             </View>
           )}
+        </View>
+
+        <View>
+          <Text style={styles.selectedDateText}>{formatDate(selectedDate)}</Text> {/* This will show the date in dd/MM/yyyy format */}
         </View>
       </View>
     </SafeAreaView>
@@ -273,7 +338,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 40,
   },
   chartWrapper: {
     height: 300,
@@ -312,6 +377,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },  
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    borderRadius: 10,
+    overflow: 'hidden', 
+    backgroundColor: '#fff',
+    elevation: 10, 
+  },
+  selectedDateText: {
+    color: '#6F5D6A',
+    fontSize: 16,
+    fontWeight: 'bold',
+    paddingBottom: 20,
+    textAlign: 'center',  // This centers the text horizontally
+    width: '100%', 
+  }
 });
 
 export default Graph;
