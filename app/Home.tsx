@@ -108,7 +108,6 @@ const Home = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Debug Table */}
         <Text>Thoughts Table (Debug)</Text>
         {thoughts.map((item, index) => (
           <View key={index}>
