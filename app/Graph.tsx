@@ -50,11 +50,11 @@ export function Content() {
         try {
           const result = await getThoughtsByDate(startDate.toISOString(), endDate.toISOString());
           const formattedData = result.map((item) => {
-            const time = item.created.split('T')[1]; // Get full time (hh:mm:ss)
+            const time = item.created.split('T')[1]; 
             const [hours, minutes] = time.split(':');
             return {
               ...item,
-              created: `${hours}:${minutes}`, // Keep full hh:mm format
+              created: `${hours}:${minutes}`, 
             };
           });
           setThoughts(formattedData);
@@ -83,12 +83,11 @@ export function Content() {
   const graphWidth = screenWidth - 40;
   const graphHeight = 250;
   const padding = 40;
+  
 
-  const maxY = Math.max(...thoughts.map((t) => t.level), 10);
-  const minY = Math.min(...thoughts.map((t) => t.level), 0);
   const points = thoughts.map((thought, index) => {
     const x = (index / (thoughts.length - 1)) * (graphWidth - padding * 2) + padding;
-    const y = graphHeight - ((thought.level - minY) / (maxY - minY)) * (graphHeight - padding);
+    const y = graphHeight - ((thought.level - 1) / (5 - 1)) * (graphHeight - padding);
     return { x, y, label: thought.created, level: thought.level };
   });
 
@@ -107,11 +106,15 @@ export function Content() {
       });
   };
 
+  const yAxisOffset = 4;
   const graphPath = points
-    .map((point, index) => (index === 0 ? `M${point.x},${point.y}` : `L${point.x},${point.y}`))
+    .map((point, index) => {
+      const adjustedY = graphHeight - ((point.level - 1) / (5 - 1)) * (graphHeight - padding) - yAxisOffset;
+      return index === 0 ? `M${point.x},${adjustedY}` : `L${point.x},${adjustedY}`;
+    })
     .join(' ');
 
-
+   
 
   return (
     <SafeAreaView style={styles.safeAreaView}>
@@ -158,8 +161,9 @@ export function Content() {
                 <Line x1={padding} y1={0} x2={padding} y2={graphHeight} stroke="#aaa" />
                 <Line x1={padding} y1={graphHeight} x2={graphWidth} y2={graphHeight} stroke="#aaa" />
 
+                
                 {[1, 2, 3, 4, 5].map((level) => {
-                  const y = graphHeight - ((level - minY) / (maxY - minY)) * (graphHeight - padding);
+                  const y = graphHeight - ((level - 1) / (5 - 1)) * (graphHeight - padding) - yAxisOffset;
                   return (
                     <SvgText key={level} x={padding - 10} y={y} fontSize="12" textAnchor="end" fill="#aaa">
                       {level}
@@ -171,16 +175,18 @@ export function Content() {
                 <Path d={graphPath} fill="none" stroke="#715868" strokeWidth={2} />
 
                 {/* Points */}
-                {points.map((point, index) => (
-                  <G key={index}>
-                    <Circle cx={point.x} cy={point.y} r={4} fill="#715868" />
-                    <SvgText x={point.x} y={graphHeight + 15} fontSize="10" textAnchor="middle">
-                      {point.label}
-                    </SvgText>
-                  </G>
-                ))}
+                {points.map((point, index) => {
+                  const y = graphHeight - ((point.level - 1) / (5 - 1)) * (graphHeight - padding) - yAxisOffset;
+                  return (
+                    <G key={index}>
+                      <Circle cx={point.x} cy={y} r={4} fill="#715868" />
+                      <SvgText x={point.x} y={graphHeight + 15} fontSize="10" textAnchor="middle">
+                        {point.label}
+                      </SvgText>
+                    </G>
+                  );
+                })}
 
-                {/* Tooltip Line */}
                 {tooltip && (
                   <>
                     <Line
@@ -271,8 +277,16 @@ const styles = StyleSheet.create({
   },
   chartWrapper: {
     height: 300,
-    width: '100%',
-    position: 'relative',
+  width: '100%',
+  position: 'relative',
+  paddingBottom: 20, 
+  borderRadius: 16, 
+  backgroundColor: '#f0f0f0', 
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.3,
+  shadowRadius: 6,
+  elevation: 5,
   },
   noDataText: {
     fontSize: 16,
