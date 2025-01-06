@@ -4,6 +4,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Calendar } from 'react-native-calendars';
 import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg';
+import { useFocusEffect } from '@react-navigation/native';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -28,6 +29,7 @@ export function Content() {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isTimePickerVisible, setTimePickerVisibility] = useState(false); 
   const [tooltip, setTooltip] = useState<{ x: number; y: number; value: string } | null>(null);
+
   const db = useSQLiteContext();
 
   const handleTimeChange = (event, time) => {
@@ -35,8 +37,42 @@ export function Content() {
     if (time) setSelectedDate(time);
   };
 
+  const fetchThoughts = async (startDate, endDate) => {
+    try {
+      const result = await getThoughtsByDate(startDate.toISOString(), endDate.toISOString());
+      
+      const formattedData = result.map((item) => {
+        const date = new Date(item.created);
+        const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000); // Convert to local time
+        const formattedDate = localDate.toISOString().split('T')[0] + ' ' + localDate.toISOString().split('T')[1].slice(0, 8); // Format to 'yyyy-MM-dd HH:mm:ss'
+        
+        return {
+          ...item,
+          created: formattedDate, // Use the formatted date
+        };
+      });
+      setThoughts(formattedData);
+    } catch (error) {
+      console.error('Error fetching thoughts:', error);
+      setThoughts([]);
+    }
+  };
+
   useEffect(() => {
-    const fetchThoughts = async () => {
+    if (selectedDate) {
+      const startDate = new Date(selectedDate);
+      const endDate = new Date(selectedDate);
+
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(23, 59, 59, 999);
+
+      fetchThoughts(startDate, endDate);
+    }
+  }, [selectedDate]); 
+
+  
+  useFocusEffect(
+    React.useCallback(() => {
       if (selectedDate) {
         const startDate = new Date(selectedDate);
         const endDate = new Date(selectedDate);
@@ -44,36 +80,37 @@ export function Content() {
         startDate.setHours(0, 0, 0, 0);
         endDate.setHours(23, 59, 59, 999);
 
-        try {
-          const result = await getThoughtsByDate(startDate.toISOString(), endDate.toISOString());
-          const formattedData = result.map((item) => {
-            const time = item.created.split('T')[1]; 
-            const [hours, minutes] = time.split(':');
-            return {
-              ...item,
-              created: `${hours}:${minutes}`, 
-            };
-          });
-          setThoughts(formattedData);
-        } catch (error) {
-          console.error('Error fetching thoughts:', error);
-          setThoughts([]);
-        }
+        fetchThoughts(startDate, endDate);
       }
-    };
-    fetchThoughts();
-  }, [selectedDate]);
+    }, [selectedDate])  // This effect depends on `selectedDate`
+  );
 
-
+  
   useEffect(() => {
     fetchAllThoughts(); 
   }, []);
 
+ 
+  const formatDateToFetch = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+  
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  };
+
   const getThoughtsByDate = async (startDate, endDate) => {
     try {
+      // Format the dates to 'YYYY-MM-DD HH:mm:ss'
+      const formattedStartDate = formatDateToFetch(new Date(startDate));
+      const formattedEndDate = formatDateToFetch(new Date(endDate));
+  
       const result = await db.getAllAsync(
         'SELECT * FROM thoughts WHERE created BETWEEN ? AND ?;',
-        [startDate, endDate]
+        [formattedStartDate, formattedEndDate]
       );
       return result;
     } catch (error) {
@@ -81,6 +118,8 @@ export function Content() {
       throw error;
     }
   };
+  
+  
 
   const fetchAllThoughts = async () => {
     try {
@@ -120,8 +159,10 @@ export function Content() {
   // Function to update highlighted dates
   const updateHighlightedDates = (data) => {
     const highlighted = data.reduce((acc, item) => {
-      const date = item.created.split('T')[0];
-      if (!acc[date]) { // Avoid redundant updates
+      // Check if the date contains 'T', indicating it might be in ISO format
+      const date = item.created.includes('T') ? item.created.split('T')[0] : item.created.split(' ')[0]; // Get the date part (YYYY-MM-DD)
+  
+      if (!acc[date]) { 
         acc[date] = { selected: true, marked: true, selectedColor: '#715868' };
       }
       return acc;
@@ -134,6 +175,7 @@ export function Content() {
       return prev; // No update needed
     });
   };
+  
   
 
   const graphWidth = screenWidth - 40;
@@ -149,17 +191,21 @@ export function Content() {
   const handleTouch = (event) => {
     const { locationX } = event.nativeEvent;
     if (points.length === 0) return;
+  
     const closestPoint = points.reduce((prev, curr) =>
       Math.abs(curr.x - locationX) < Math.abs(prev.x - locationX) ? curr : prev
     );
 
-    const formattedTime = closestPoint.label.split(':').slice(0, 2).join(':');
-      setTooltip({
-        x: closestPoint.x,
-        y: closestPoint.y,
-        value: `${formattedTime}`,
-      });
+    const timePart = closestPoint.label.split(' ')[1];  // This will give you 'HH:mm:ss'
+    const formattedTime = timePart.split(':').slice(0, 2).join(':');
+  
+    setTooltip({
+      x: closestPoint.x,
+      y: closestPoint.y,
+      value: formattedTime,  // Show only the hh:mm part
+    });
   };
+  
 
   const yAxisOffset = 4;
   const graphPath = points
