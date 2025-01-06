@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions, SafeAreaView } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { LineChart } from 'react-native-chart-kit';
+import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -24,8 +24,8 @@ export function Content() {
   const [thoughts, setThoughts] = useState<Thought[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [isTimePickerVisible, setTimePickerVisibility] = useState(false);  // Time Picker state
-  const [tooltipData, setTooltipData] = useState<string | null>(null);
+  const [isTimePickerVisible, setTimePickerVisibility] = useState(false); 
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; value: string } | null>(null);
   const db = useSQLiteContext();
 
   const handleDateChange = (event, date) => {
@@ -49,10 +49,14 @@ export function Content() {
 
         try {
           const result = await getThoughtsByDate(startDate.toISOString(), endDate.toISOString());
-          const formattedData = result.map((item) => ({
-            ...item,
-            created: item.created.split('T')[1].split(':')[0] + ':00', // Keep hours for display
-          }));
+          const formattedData = result.map((item) => {
+            const time = item.created.split('T')[1]; // Get full time (hh:mm:ss)
+            const [hours, minutes] = time.split(':');
+            return {
+              ...item,
+              created: `${hours}:${minutes}`, // Keep full hh:mm format
+            };
+          });
           setThoughts(formattedData);
         } catch (error) {
           console.error('Error fetching thoughts:', error);
@@ -76,12 +80,44 @@ export function Content() {
     }
   };
 
+  const graphWidth = screenWidth - 40;
+  const graphHeight = 250;
+  const padding = 40;
+
+  const maxY = Math.max(...thoughts.map((t) => t.level), 10);
+  const minY = Math.min(...thoughts.map((t) => t.level), 0);
+  const points = thoughts.map((thought, index) => {
+    const x = (index / (thoughts.length - 1)) * (graphWidth - padding * 2) + padding;
+    const y = graphHeight - ((thought.level - minY) / (maxY - minY)) * (graphHeight - padding);
+    return { x, y, label: thought.created, level: thought.level };
+  });
+
+  const handleTouch = (event) => {
+    const { locationX } = event.nativeEvent;
+    if (points.length === 0) return;
+    const closestPoint = points.reduce((prev, curr) =>
+      Math.abs(curr.x - locationX) < Math.abs(prev.x - locationX) ? curr : prev
+    );
+
+    const formattedTime = closestPoint.label.split(':').slice(0, 2).join(':');
+      setTooltip({
+        x: closestPoint.x,
+        y: closestPoint.y,
+        value: `${formattedTime}`,
+      });
+  };
+
+  const graphPath = points
+    .map((point, index) => (index === 0 ? `M${point.x},${point.y}` : `L${point.x},${point.y}`))
+    .join(' ');
+
+
+
   return (
     <SafeAreaView style={styles.safeAreaView}>
       <View style={styles.container}>
-        <Text style={styles.title}>Your Thinking Graph</Text>
-        <View style={styles.description}>
-          <Text>The daily graph shows the intensity of your thoughts, by date.</Text>
+        <View>
+          <Text  style={styles.description}>The daily graph shows the intensity of your thoughts, by hour at a selected date.</Text>
         </View>
 
         {/* Date Picker */}
@@ -118,51 +154,61 @@ export function Content() {
             <Text style={styles.noDataText}>No records to show</Text>
           ) : (
             <View style={styles.chartWrapper}>
-              <LineChart
-                data={{
-                  labels: thoughts.map((item) => item.created), // Show the time labels
-                  datasets: [
-                    {
-                      data: thoughts.map((item) => item.level), // Y-axis data
-                    },
-                  ],
-                }}
-                width={screenWidth - 40} // Chart width
-                height={250} // Chart height
-                yAxisLabel=""
-                yAxisSuffix=""
-                chartConfig={{
-                  backgroundColor: '#e3c7cb',
-                  backgroundGradientFrom: '#d2b1c1',
-                  backgroundGradientTo: '#ad899d',
-                  decimalPlaces: 0, // Show integer values
-                  color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                  labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                  style: {
-                    borderRadius: 16,
-                  },
-                  propsForDots: {
-                    r: '6',
-                    strokeWidth: '2',
-                    stroke: '#715868',
-                  },
-                }}
-                bezier // Smooth curves
-                onDataPointClick={(data) => {
-                  const selectedData = thoughts[data.index];
-                  const time = selectedData.created.split('T')[1].split(':').slice(0, 2).join(':'); // Get hh:mm format
-                  // Show the tooltip with the time
-                  setTooltipData(`Time: ${time}`);
-                }}
-                style={{
-                  marginVertical: 8,
-                  borderRadius: 16,
-                }}
-              />
+              <Svg width={graphWidth} height={graphHeight} onTouchStart={handleTouch}>
+                <Line x1={padding} y1={0} x2={padding} y2={graphHeight} stroke="#aaa" />
+                <Line x1={padding} y1={graphHeight} x2={graphWidth} y2={graphHeight} stroke="#aaa" />
 
-              {tooltipData && (
-                <View style={styles.tooltip}>
-                  <Text style={styles.tooltipText}>{tooltipData}</Text>
+                {[1, 2, 3, 4, 5].map((level) => {
+                  const y = graphHeight - ((level - minY) / (maxY - minY)) * (graphHeight - padding);
+                  return (
+                    <SvgText key={level} x={padding - 10} y={y} fontSize="12" textAnchor="end" fill="#aaa">
+                      {level}
+                    </SvgText>
+                  );
+                })}
+
+                {/* Line Path */}
+                <Path d={graphPath} fill="none" stroke="#715868" strokeWidth={2} />
+
+                {/* Points */}
+                {points.map((point, index) => (
+                  <G key={index}>
+                    <Circle cx={point.x} cy={point.y} r={4} fill="#715868" />
+                    <SvgText x={point.x} y={graphHeight + 15} fontSize="10" textAnchor="middle">
+                      {point.label}
+                    </SvgText>
+                  </G>
+                ))}
+
+                {/* Tooltip Line */}
+                {tooltip && (
+                  <>
+                    <Line
+                      x1={tooltip.x}
+                      y1={0}
+                      x2={tooltip.x}
+                      y2={graphHeight}
+                      stroke="gray"
+                      strokeWidth={1}
+                      strokeDasharray="4 4"
+                    />
+                    <Circle cx={tooltip.x} cy={tooltip.y} r={6} fill="red" />
+                  </>
+                )}
+              </Svg>
+
+              {/* Tooltip */}
+              {tooltip && (
+                <View
+                  style={[
+                    styles.tooltip,
+                    {
+                      left: tooltip.x - 50,
+                      top: tooltip.y - 40,
+                    },
+                  ]}
+                >
+                  <Text style={styles.tooltipText}>{tooltip.value}</Text>
                 </View>
               )}
             </View>
@@ -177,6 +223,7 @@ const styles = StyleSheet.create({
   safeAreaView: {
     flex: 1,
     backgroundColor: '#F3EFF0',
+    overflow: 'visible',
   },
   scrollView: {
     flex: 1,
@@ -195,6 +242,7 @@ const styles = StyleSheet.create({
   },
   description: {
     marginBottom: 20,
+    color: '#6F5D6A',
   },
   customButton: {
     backgroundColor: '#bf4da2',
@@ -224,6 +272,7 @@ const styles = StyleSheet.create({
   chartWrapper: {
     height: 300,
     width: '100%',
+    position: 'relative',
   },
   noDataText: {
     fontSize: 16,
@@ -231,14 +280,17 @@ const styles = StyleSheet.create({
   },
   tooltip: {
     position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -50 }, { translateY: -50 }],
-    backgroundColor: '#444',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    zIndex: 9999,
+  backgroundColor: '#444',
+  paddingVertical: 5,
+  paddingHorizontal: 10,
+  borderRadius: 8,
+  zIndex: 9999, // Ensure it appears above the graph
+  alignItems: 'center',
+  justifyContent: 'center',
+  shadowColor: '#000', // Add shadow for better visibility
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.3,
+  shadowRadius: 4,
   },
   
   tooltipText: {

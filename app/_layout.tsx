@@ -88,7 +88,7 @@ const Layout = () => {
             }}
           >
             <Tab.Screen name="Home" component={HomeScreen} />
-            <Tab.Screen name="Graph" component={GraphScreen} />
+            <Tab.Screen name="Your Thinking Graph" component={GraphScreen} />
             <Tab.Screen name="Tips" component={TipsNavigator} options={{ headerShown: false }} />
             <Tab.Screen name="MyTools" component={MyToolsScreen} />
           </Tab.Navigator>
