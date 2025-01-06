@@ -1,14 +1,17 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { Image , SafeAreaView, StyleSheet, ScrollView ,View, Text,TextInput, TouchableOpacity} from 'react-native';
 import React from 'react'
-
-const intro = () => {
+export default function Intro() {
   return (
-    <View>
-      <Text>intro</Text>
-    </View>
-  )
+    <ScrollView contentContainerStyle={styles.scrollView}>
+      <Text>Intro</Text> 
+    </ScrollView>
+  );
 }
 
-export default intro
-
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#F3EFF0',
+  },
+})

@@ -12,8 +12,6 @@ const Tips = () => {
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
       <View style={styles.bodyContainer}>
-        <Text style={styles.heading}>Tips</Text>
-
         {/* Meditation Section */}
         <View style={styles.tipContainer}>
           <Text style={styles.tipTitle}>Meditation</Text>

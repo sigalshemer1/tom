@@ -4,13 +4,15 @@ import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import Icon from 'react-native-vector-icons/Ionicons';
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { StyleSheet } from 'react-native';
+import { StyleSheet,View } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
+import IntroScreen from './intro/Intro';
 import HomeScreen from './Home';
 import GraphScreen from './Graph';
 import MyToolsScreen from './MyTools';
@@ -77,21 +79,63 @@ const Layout = () => {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <SQLiteProvider databaseName="tom.db" onInit={migrateDbIfNeeded}>
         {!isFirstTime && (
-          <Tab.Navigator
-            screenOptions={{
-              tabBarStyle: styles.tabBar,
-              tabBarActiveTintColor: '#bf4da2',
-              tabBarInactiveTintColor: '#6F5D6A',
-              headerStyle: styles.header,
-              headerTintColor: '#6F5D6A',
-              headerTitleStyle: styles.headerTitle,
-            }}
-          >
-            <Tab.Screen name="Home" component={HomeScreen} />
-            <Tab.Screen name="Your Graph" component={GraphScreen} />
-            <Tab.Screen name="Tips" component={TipsNavigator} options={{ headerShown: false }} />
-            <Tab.Screen name="MyTools" component={MyToolsScreen} />
-          </Tab.Navigator>
+            <Tab.Navigator 
+               screenOptions={{
+                 tabBarStyle: styles.tabBar,
+                 tabBarActiveTintColor: '#bf4da2',
+                 tabBarInactiveTintColor: '#6F5D6A',
+                 headerStyle: styles.header,
+                 headerTintColor: '#6F5D6A',
+                 headerTitleStyle: styles.headerTitle,
+               }}
+            >
+              <Tab.Screen
+                name="Home"
+                component={HomeScreen}
+                options={{
+                  tabBarIcon: ({ color, size }) => (
+                    <Icon name="home-outline" color={color} size={size} />
+                  ),
+                }}
+              />
+              <Tab.Screen
+                name="Your Graph"
+                component={GraphScreen}
+                options={{
+                  tabBarIcon: ({ color, size }) => (
+                    <Icon name="bar-chart-outline" color={color} size={size} />
+                  ),
+                }}
+              />
+              <Tab.Screen
+                name="Tips"
+                component={TipsNavigator}
+                options={{
+                  headerShown: false,
+                  tabBarIcon: ({ color, size }) => (
+                    <Icon name="bulb-outline" color={color} size={size} />
+                  ),
+                }}
+              />
+              <Tab.Screen
+                name="MyTools"
+                component={MyToolsScreen}
+                options={{
+                  tabBarIcon: ({ color, size }) => (
+                    <Icon name="hammer-outline" color={color} size={size} />
+                  ),
+                }}
+              />
+              <Tab.Screen
+                name="Intro"
+                component={IntroScreen}
+                options={{
+                  tabBarIcon: ({ color, size }) => (
+                    <Icon name="heart-half-outline" color={color} size={size} />
+                  ),
+                }}
+              />
+            </Tab.Navigator>
         )}
       </SQLiteProvider>
     </ThemeProvider>
@@ -129,6 +173,9 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#F3EFF0',
     elevation: 0,
+  },
+  top:{
+    backgroundColor: '#F3EFF0',
   },
   headerTitle: {
     fontWeight: 'bold',
