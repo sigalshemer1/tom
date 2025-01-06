@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions, SafeAreaView, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions, SafeAreaView, Modal, Image } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Calendar } from 'react-native-calendars';
@@ -29,11 +29,6 @@ export function Content() {
   const [isTimePickerVisible, setTimePickerVisibility] = useState(false); 
   const [tooltip, setTooltip] = useState<{ x: number; y: number; value: string } | null>(null);
   const db = useSQLiteContext();
-
-  const handleDateChange = (event, date) => {
-    setDatePickerVisibility(false);
-    if (date) setSelectedDate(date);
-  };
 
   const handleTimeChange = (event, time) => {
     setTimePickerVisibility(false);
@@ -112,6 +107,7 @@ export function Content() {
               onDayPress={(day) => {
                 onDateSelect(new Date(day.dateString)); // Trigger date selection logic
                 onClose(); // Close the calendar modal
+                setTooltip(null); 
               }}
             />
           </View>
@@ -184,16 +180,17 @@ export function Content() {
           <Text  style={styles.description}>The daily graph shows the intensity of your thoughts, by hour at a selected date.</Text>
         </View>
 
+        <View style={styles.buttonContainer}>
         {/* Date Picker */}
-        <TouchableOpacity onPress={() => setDatePickerVisibility(true)} style={styles.customButton}>
-          <Text style={styles.buttonText}>Select Date</Text>
-        </TouchableOpacity>
-        
-        {/* Time Picker */}
-        <TouchableOpacity onPress={() => setTimePickerVisibility(true)} style={styles.customButton}>
-          <Text style={styles.buttonText}>Select Time</Text>
-        </TouchableOpacity>
-
+          <TouchableOpacity onPress={() => setDatePickerVisibility(true)} style={styles.customButton}>
+            <Text style={styles.buttonText}>Pick a Date</Text>
+            <Image
+              source={require('../assets/images/calendar.png')}  // Update the path if needed
+              style={styles.icon}
+            />
+          </TouchableOpacity>
+          
+        </View>
         {isDatePickerVisible && (
           <CustomDatePicker
             isVisible={isDatePickerVisible}
@@ -278,13 +275,12 @@ export function Content() {
                   <Text style={styles.tooltipText}>{tooltip.value}</Text>
                 </View>
               )}
+              <Text style={styles.selectedDateText}>{formatDate(selectedDate)}</Text>
             </View>
           )}
+          
         </View>
 
-        <View>
-          <Text style={styles.selectedDateText}>{formatDate(selectedDate)}</Text> {/* This will show the date in dd/MM/yyyy format */}
-        </View>
       </View>
     </SafeAreaView>
   );
@@ -315,10 +311,16 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: '#6F5D6A',
   },
+  buttonContainer: {
+    flexDirection: 'row',  // This makes the buttons appear side by side
+    justifyContent: 'space-between',  // Space between the buttons
+    width: '100%',  // Ensure the container takes up full width
+    marginBottom: 20,  // Add some space below the buttons
+  },
   customButton: {
     backgroundColor: '#bf4da2',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -327,18 +329,21 @@ const styles = StyleSheet.create({
     elevation: 5,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    width: '100%',
+    flexDirection: 'row',  // Ensures text and icon are side by side
+    paddingRight: 12,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
+    marginRight: 8,
   },
   chartContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 40,
+    marginTop: 0,
   },
   chartWrapper: {
     height: 300,
@@ -391,13 +396,18 @@ const styles = StyleSheet.create({
     elevation: 10, 
   },
   selectedDateText: {
-    color: '#6F5D6A',
-    fontSize: 16,
+    color: '#bf4da2',
+    fontSize: 18,
     fontWeight: 'bold',
-    paddingBottom: 20,
+    marginTop: 10,
     textAlign: 'center',  // This centers the text horizontally
     width: '100%', 
-  }
+  },
+  icon: {
+    width: 20,  // Set the size of the icon
+    height: 20,
+    marginLeft: 8,  // Space between the text and icon
+  },
 });
 
 export default Graph;
