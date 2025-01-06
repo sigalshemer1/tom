@@ -25,6 +25,7 @@ export function Content() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isTimePickerVisible, setTimePickerVisibility] = useState(false);  // Time Picker state
+  const [tooltipData, setTooltipData] = useState<string | null>(null);
   const db = useSQLiteContext();
 
   const handleDateChange = (event, date) => {
@@ -131,9 +132,9 @@ export function Content() {
                 yAxisLabel=""
                 yAxisSuffix=""
                 chartConfig={{
-                  backgroundColor: '#e26a00',
-                  backgroundGradientFrom: '#fb8c00',
-                  backgroundGradientTo: '#ffa726',
+                  backgroundColor: '#e3c7cb',
+                  backgroundGradientFrom: '#d2b1c1',
+                  backgroundGradientTo: '#ad899d',
                   decimalPlaces: 0, // Show integer values
                   color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
                   labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
@@ -143,19 +144,27 @@ export function Content() {
                   propsForDots: {
                     r: '6',
                     strokeWidth: '2',
-                    stroke: '#ffa726',
+                    stroke: '#715868',
                   },
                 }}
                 bezier // Smooth curves
                 onDataPointClick={(data) => {
-                  // Tooltip functionality for interaction
-                  alert(`Level: ${data.value}\nTime: ${thoughts[data.index]?.created}`);
+                  const selectedData = thoughts[data.index];
+                  const time = selectedData.created.split('T')[1].split(':').slice(0, 2).join(':'); // Get hh:mm format
+                  // Show the tooltip with the time
+                  setTooltipData(`Time: ${time}`);
                 }}
                 style={{
                   marginVertical: 8,
                   borderRadius: 16,
                 }}
               />
+
+              {tooltipData && (
+                <View style={styles.tooltip}>
+                  <Text style={styles.tooltipText}>{tooltipData}</Text>
+                </View>
+              )}
             </View>
           )}
         </View>
@@ -220,6 +229,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#999999',
   },
+  tooltip: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -50 }, { translateY: -50 }],
+    backgroundColor: '#444',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    zIndex: 9999,
+  },
+  
+  tooltipText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },  
 });
 
 export default Graph;
