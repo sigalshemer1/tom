@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { WebView } from 'react-native-webview';
 
@@ -12,9 +12,8 @@ const Meditations = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
+      <SafeAreaView style={styles.safeAreaView}>
       <View style={styles.bodyContainer}>
-        <Text style={styles.heading}>Meditation Types</Text>
-
         {/* Video Section */}
         <View style={styles.tipContainer}>
           <View style={styles.videoContainer}>
@@ -81,19 +80,26 @@ const Meditations = () => {
           <Text style={styles.backButtonText}>Back to Tips</Text>
         </TouchableOpacity>
       </View>
+      </SafeAreaView>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   scrollView: {
-    padding: 16,
+    padding: 5,
     flexGrow: 1,
     backgroundColor: '#F3EFF0',
   },
   bodyContainer: {
     flex: 1,
-    padding: 20,
+    paddingTop: 0,
+    paddingHorizontal:20,
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#F3EFF0',
+    overflow: 'visible',
   },
   heading: {
     fontSize: 32,

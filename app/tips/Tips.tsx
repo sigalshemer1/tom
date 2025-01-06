@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 const Tips = () => {
@@ -11,10 +11,16 @@ const Tips = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
+      <SafeAreaView style={styles.safeAreaView}>
       <View style={styles.bodyContainer}>
         {/* Meditation Section */}
         <View style={styles.tipContainer}>
-          <Text style={styles.tipTitle}>Meditation</Text>
+          <Text 
+            style={styles.tipTitle}
+            onPress={() => handleNavigation('Meditation')}
+          >
+            Meditation
+          </Text>
           <Text style={styles.tipText}>
             Meditation is the oldest tool for achieving peace of mind.{"\n"}
             We all know how difficult it is to stay present in silence when your thoughts are racing, but hey - that's why we're here, right?{"\n"}
@@ -33,7 +39,12 @@ const Tips = () => {
 
         {/* Sport Section */}
         <View style={styles.tipContainer}>
-          <Text style={styles.tipTitle}>Sport and Dance</Text>
+          <Text 
+          style={styles.tipTitle}
+          onPress={() => handleNavigation('Sport')}
+          >
+            Sport and Dance
+          </Text>
           <Text style={styles.tipText}>
             Moving our body back to balance and health can do the trick.{"\n"}
             Here's the{" "}
@@ -51,7 +62,12 @@ const Tips = () => {
 
         {/* Healing Section */}
         <View style={styles.tipContainer}>
-          <Text style={styles.tipTitle}>Healing</Text>
+          <Text 
+            style={styles.tipTitle}
+            onPress={() => handleNavigation('Healing')}
+          >
+            Healing
+          </Text>
           <Text style={styles.tipText}>
           The torture we feel when our thoughts overwhelm us is not necessary. 
           There are many ways to relieve tension and release blockages. 
@@ -69,28 +85,29 @@ const Tips = () => {
           </Text>
         </View>
       </View>
+      </SafeAreaView>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   scrollView: {
-    padding: 16,
+    padding: 5,
     flexGrow: 1,
     backgroundColor: '#F3EFF0',
   },
   bodyContainer: {
     flex: 1,
-    padding: 20,
+    paddingTop: 0,
+    paddingHorizontal:20,
   },
-  heading: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#6F5D6A',
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#F3EFF0',
+    overflow: 'visible',
   },
   tipContainer: {
-    marginBottom: 30,
+    marginBottom: 20,
     padding: 15,
     borderRadius: 10,
     backgroundColor: '#fff',

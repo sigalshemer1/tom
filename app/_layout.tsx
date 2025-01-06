@@ -29,12 +29,49 @@ const Stack = createStackNavigator();
 
 const TipsNavigator = () => (
   <Stack.Navigator>
-    <Stack.Screen name="TipsMain" component={TipsScreen} options={{ title: 'Tips' }} />
-    <Stack.Screen name="Meditation" component={MeditationScreen} options={{ title: 'Meditation' }} />
-    <Stack.Screen name="Sport" component={SportScreen} options={{ title: 'Sport and Dance' }} />
-    <Stack.Screen name="Healing" component={HealingScreen} options={{ title: 'Healing' }} />
+    <Stack.Screen
+      name="TipsMain"
+      component={TipsScreen}
+      options={{
+        title: 'Tips',
+        headerStyle: styles.header, // Apply the header style from your layout
+        headerTintColor: '#6F5D6A', // Header text color
+        headerTitleStyle: styles.headerTitle, // Title styling
+      }}
+    />
+    <Stack.Screen
+      name="Meditation"
+      component={MeditationScreen}
+      options={{
+        title: 'Meditation',
+        headerStyle: styles.header,
+        headerTintColor: '#6F5D6A',
+        headerTitleStyle: styles.headerTitle,
+      }}
+    />
+    <Stack.Screen
+      name="Sport"
+      component={SportScreen}
+      options={{
+        title: 'Sport and Dance',
+        headerStyle: styles.header,
+        headerTintColor: '#6F5D6A',
+        headerTitleStyle: styles.headerTitle,
+      }}
+    />
+    <Stack.Screen
+      name="Healing"
+      component={HealingScreen}
+      options={{
+        title: 'Healing',
+        headerStyle: styles.header,
+        headerTintColor: '#6F5D6A',
+        headerTitleStyle: styles.headerTitle,
+      }}
+    />
   </Stack.Navigator>
 );
+
 
 
 const Layout = () => {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Linking, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 const Healing = () => {
@@ -20,9 +20,8 @@ const Healing = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
+      <SafeAreaView style={styles.safeAreaView}>
       <View style={styles.bodyContainer}>
-        <Text style={styles.heading}>Treatments</Text>
-
         <View style={styles.tipContainer}>
           <Text style={styles.tipText}>
             We are currently inundated with a multitude of body, mind, and spirit treatment options designed to relieve overthinking.{"\n"}
@@ -106,19 +105,26 @@ const Healing = () => {
           <Text style={styles.backButtonText}>Back to Tips</Text>
         </TouchableOpacity>
       </View>
+      </SafeAreaView>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   scrollView: {
-    padding: 16,
+    padding: 5,
     flexGrow: 1,
     backgroundColor: '#F3EFF0',
   },
   bodyContainer: {
     flex: 1,
-    padding: 20,
+    paddingTop: 0,
+    paddingHorizontal:20,
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#F3EFF0',
+    overflow: 'visible',
   },
   heading: {
     fontSize: 32,
@@ -127,7 +133,7 @@ const styles = StyleSheet.create({
     color: '#6F5D6A',
   },
   tipContainer: {
-    marginBottom: 30,
+    marginBottom: 20,
     padding: 15,
     borderRadius: 10,
     backgroundColor: '#fff',

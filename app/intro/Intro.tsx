@@ -1,5 +1,6 @@
 import { Image , SafeAreaView, StyleSheet, ScrollView ,View, Text,TextInput, TouchableOpacity} from 'react-native';
 import React from 'react'
+
 export default function Intro() {
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>

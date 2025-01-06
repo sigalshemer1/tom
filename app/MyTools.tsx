@@ -74,8 +74,9 @@ export function Content() {
   };
 
   return (
-      <SafeAreaView>
-        <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.scrollView}>
+      <SafeAreaView style={styles.safeAreaView}>
+        <View style={styles.bodyContainer}>
           <View style={styles.form}>
             <TextInput
               style={styles.inputWrap}
@@ -124,19 +125,25 @@ export function Content() {
             </View>
         </View>
       </SafeAreaView>
-      
+      </ScrollView>  
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-      flex: 1,
-      padding: 20,
+  bodyContainer: {
+    flex: 1,
+    paddingTop: 0,
+    paddingHorizontal:20,
   },
   heading: {
       fontSize: 24,
       fontWeight: 'bold',
       marginBottom: 20,
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#F3EFF0',
+    overflow: 'visible',
   },
   form: {
       marginBottom: 20,
@@ -217,7 +224,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 3,
   },
   scrollView: {
-    padding: 16,
+    padding: 5,
+    flexGrow: 1,
     backgroundColor: '#F3EFF0',
+  },
+  bodyContainer: {
+    flex: 1,
+    paddingTop: 0,
+    paddingHorizontal:20,
   },
 });

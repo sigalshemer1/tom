@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
-import { TouchableOpacity, FlatList, TextInput, Image, ScrollView, View, Text, StyleSheet, Linking } from 'react-native';
+import { TouchableOpacity, FlatList, SafeAreaView, Image, ScrollView, View, Text, StyleSheet, Linking } from 'react-native';
 
 const Home = () => {
   const [level, setLevel] = useState('');
@@ -30,6 +30,7 @@ const Home = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
+      <SafeAreaView style={styles.safeAreaView}>
       <Text style={styles.titleOfLevels}>Intencity level</Text>
       <Text style={styles.normalText}>
         How intense is your thought right now? 
@@ -91,6 +92,7 @@ const Home = () => {
           </TouchableOpacity>
         </View>
       </View>
+      </SafeAreaView>
     </ScrollView>
   );
 };
@@ -104,6 +106,11 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#F3EFF0',
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#F3EFF0',
+    overflow: 'visible',
   },
   heading: {
     fontSize: 32,
