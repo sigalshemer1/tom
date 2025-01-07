@@ -222,6 +222,7 @@ export function Content() {
   return (
     <SafeAreaView style={styles.safeAreaView}>
       <View style={styles.container}>
+        <Text style={styles.title}>Your graph</Text>
         <View>
           <Text  style={styles.description}>The daily graph shows the intensity of your thoughts, by hour at a selected date.</Text>
         </View>
@@ -352,6 +353,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: '#6F5D6A',
+    textAlign: 'center',
   },
   description: {
     marginBottom: 20,

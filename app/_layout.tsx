@@ -9,8 +9,9 @@ import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { StyleSheet,View } from 'react-native';
+import { StyleSheet,View ,Image } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import logo from '../assets/images/logo.png';
 
 import IntroScreen from './intro/Intro';
 import HomeScreen from './Home';
@@ -26,14 +27,19 @@ const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 // SplashScreen.preventAutoHideAsync();
-
+export const HeaderLogo = () => (
+  <Image
+    source={logo}
+    style={{ width: 200, height: 60, resizeMode: 'contain' }}
+  />
+);
 const TipsNavigator = () => (
   <Stack.Navigator>
     <Stack.Screen
       name="TipsMain"
       component={TipsScreen}
       options={{
-        title: 'Tips',
+        headerTitle: () => <HeaderLogo />,
         headerStyle: styles.header, // Apply the header style from your layout
         headerTintColor: '#6F5D6A', // Header text color
         headerTitleStyle: styles.headerTitle, // Title styling
@@ -43,7 +49,7 @@ const TipsNavigator = () => (
       name="Meditation"
       component={MeditationScreen}
       options={{
-        title: 'Meditation',
+        headerTitle: () => <HeaderLogo />,
         headerStyle: styles.header,
         headerTintColor: '#6F5D6A',
         headerTitleStyle: styles.headerTitle,
@@ -53,7 +59,7 @@ const TipsNavigator = () => (
       name="Sport"
       component={SportScreen}
       options={{
-        title: 'Sport and Dance',
+        headerTitle: () => <HeaderLogo />,
         headerStyle: styles.header,
         headerTintColor: '#6F5D6A',
         headerTitleStyle: styles.headerTitle,
@@ -63,7 +69,7 @@ const TipsNavigator = () => (
       name="Healing"
       component={HealingScreen}
       options={{
-        title: 'Healing',
+        headerTitle: () => <HeaderLogo />,
         headerStyle: styles.header,
         headerTintColor: '#6F5D6A',
         headerTitleStyle: styles.headerTitle,
@@ -111,6 +117,7 @@ const Layout = () => {
     return null;
   }
 
+  
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -123,7 +130,7 @@ const Layout = () => {
                  tabBarInactiveTintColor: '#6F5D6A',
                  headerStyle: styles.header,
                  headerTintColor: '#6F5D6A',
-                 headerTitleStyle: styles.headerTitle,
+                 headerTitle: () => <HeaderLogo />,
                }}
             >
               <Tab.Screen

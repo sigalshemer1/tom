@@ -4,18 +4,20 @@
     "slug": "Tom",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/app-icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
-    },
+      "supportsTablet": true,
+      "icon": "./assets/images/app-icon.png"  
+    }, 
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/app-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.sigalshemer.Tom"
     },
     "web": {
       "bundler": "metro",
@@ -37,6 +39,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "a0fb01da-e5f2-4e3b-91ce-80286787a76e"
+      }
     }
   }
 }

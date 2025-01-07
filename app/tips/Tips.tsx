@@ -12,6 +12,7 @@ const Tips = () => {
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
       <SafeAreaView style={styles.safeAreaView}>
+        <Text style={styles.title}>Tips</Text>
       <View style={styles.bodyContainer}>
         {/* Meditation Section */}
         <View style={styles.tipContainer}>
@@ -134,6 +135,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#bf4da2',
     textDecorationLine: 'underline',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#6F5D6A',
+    textAlign: 'center',
   },
 });
 

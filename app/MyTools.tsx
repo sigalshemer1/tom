@@ -76,6 +76,7 @@ export function Content() {
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
       <SafeAreaView style={styles.safeAreaView}>
+        <Text style={styles.title}>My tools</Text>
         <View style={styles.bodyContainer}>
           <View style={styles.form}>
             <TextInput
@@ -148,6 +149,13 @@ const styles = StyleSheet.create({
   form: {
       marginBottom: 20,
   },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#6F5D6A',
+    textAlign: 'center',
+  },
   inputWrap:{
     borderColor: 'gray',
     borderWidth: 1,
@@ -159,7 +167,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
     marginTop:6,
-    
+    paddingHorizontal:10,
   },
   input: {
       height: 40,
@@ -227,10 +235,5 @@ const styles = StyleSheet.create({
     padding: 5,
     flexGrow: 1,
     backgroundColor: '#F3EFF0',
-  },
-  bodyContainer: {
-    flex: 1,
-    paddingTop: 0,
-    paddingHorizontal:20,
   },
 });

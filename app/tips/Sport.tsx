@@ -21,6 +21,7 @@ const Sport = () => {
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
       <SafeAreaView style={styles.safeAreaView}>
+        <Text style={styles.title}>Sport and dance</Text>
       <View style={styles.bodyContainer}>
         <View style={styles.tipContainer}>
           <Text style={styles.tipText}>
@@ -211,6 +212,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#6F5D6A',
+    textAlign: 'center',
   },
 });
 
