@@ -164,11 +164,11 @@ const Layout = () => {
                 }}
               />
               <Tab.Screen
-                name="Intro"
+                name="Export"
                 component={IntroScreen}
                 options={{
                   tabBarIcon: ({ color, size }) => (
-                    <Icon name="heart-half-outline" color={color} size={size} />
+                    <Icon name="paper-plane-outline" color={color} size={size} />
                   ),
                 }}
               />
