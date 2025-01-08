@@ -13,7 +13,7 @@ import { StyleSheet,View ,Image } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import logo from '../assets/images/logo.png';
 
-import IntroScreen from './intro/Intro';
+import SettingsScreen from './Settings';
 import HomeScreen from './Home';
 import GraphScreen from './Graph';
 import MyToolsScreen from './MyTools';
@@ -21,6 +21,7 @@ import TipsScreen from './tips/Tips';
 import MeditationScreen from './tips/Meditation';
 import SportScreen from './tips/Sport';
 import HealingScreen from './tips/Healing'
+import IntroScreen from './Intro'
 import 'react-native-reanimated';
 
 const Tab = createBottomTabNavigator();
@@ -73,6 +74,28 @@ const TipsNavigator = () => (
         headerStyle: styles.header,
         headerTintColor: '#6F5D6A',
         headerTitleStyle: styles.headerTitle,
+      }}
+    />
+  </Stack.Navigator>
+);
+
+const IntroNavigator = () => (
+  <Stack.Navigator>
+    <Stack.Screen
+      name="SettingsMain"
+      component={SettingsScreen}
+      options={{
+        headerTitle: () => <HeaderLogo />,
+        headerStyle: styles.header,
+        headerTintColor: '#6F5D6A',
+        headerTitleStyle: styles.headerTitle,
+      }}
+    />
+    <Stack.Screen
+      name="Intro"
+      component={IntroScreen}
+      options={{
+        headerShown: false, 
       }}
     />
   </Stack.Navigator>
@@ -171,11 +194,12 @@ const Layout = () => {
                 }}
               />
               <Tab.Screen
-                name="Export"
-                component={IntroScreen}
+                name="Settings"
+                component={IntroNavigator}
                 options={{
+                  headerShown: false,  
                   tabBarIcon: ({ color, size }) => (
-                    <Icon name="paper-plane-outline" color={color} size={size} />
+                    <Icon name="settings-outline" color={color} size={size} />
                   ),
                 }}
               />

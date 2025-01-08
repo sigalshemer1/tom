@@ -31,7 +31,7 @@ const Home = () => {
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
       <SafeAreaView style={styles.safeAreaView}>
-      <Text style={styles.titleOfLevels}>Intencity level</Text>
+      <Text style={styles.titleOfLevels}>Choose a level</Text>
       <Text style={styles.normalText}>
         How intense is your thought right now? 
       </Text>
@@ -73,24 +73,22 @@ const Home = () => {
             Welcome to <Text style={styles.boldText}>ThinkOmeter</Text>, where you will learn your thought’s patterns.
           </Text>
           <Text style={styles.normalText}>
-            Most of our thinking (some say 90% of them, by the age of 35) are habitual old circuits running, uncontrolled, in and out of our consciousness.
+            Knowing your thought patterns can help prevent negative thought waves by giving you early warning when one 
+            is coming. 
           </Text>
           <Text style={styles.normalText}>
-            Since our thoughts can make us extremely miserable (as most of us know), measuring and understanding our thought patterns can provide a good tool to begin to control the impact of our thoughts on our quality of life.
-          </Text>
-          <Text style={styles.normalText}>
-            So <Text style={styles.boldText}>let's shake them off our brain!</Text> Here is a short introduction video that will explain how to use this app.
+          Gradually, you will be able to recognize when a wave is approaching and learn what helps you stop it.
           </Text>
         </View>
 
-        <View style={styles.buttonContainer}>
+        {/* <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.customButton}
             onPress={() => Linking.openURL('https://www.youtube.com/embed/yaahVCL9Cdw?si=8mWHmYz4JyOufMrh')}
           >
             <Text style={styles.buttonText}>Watch Introduction Video</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
       </View>
       </SafeAreaView>
     </ScrollView>
@@ -99,7 +97,7 @@ const Home = () => {
 
 const styles = StyleSheet.create({
   scrollView: {
-    padding: 16,
+    paddingHorizontal: 16,
     backgroundColor: '#F3EFF0',
   },
   bodyContainer: {
@@ -155,9 +153,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   titleOfLevels:{
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 15,
     color: '#bf4da2',
     textAlign: 'center',
     width:'100%',

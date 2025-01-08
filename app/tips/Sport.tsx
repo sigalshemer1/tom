@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
     color: '#6F5D6A',
-    textAlign: 'center',
+    paddingHorizontal: 25,
   },
 });
 
