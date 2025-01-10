@@ -41,9 +41,9 @@ const TipsNavigator = () => (
       component={TipsScreen}
       options={{
         headerTitle: () => <HeaderLogo />,
-        headerStyle: styles.header, // Apply the header style from your layout
-        headerTintColor: '#6F5D6A', // Header text color
-        headerTitleStyle: styles.headerTitle, // Title styling
+        headerStyle: styles.header, 
+        headerTintColor: '#6F5D6A', 
+        headerTitleStyle: styles.headerTitle, 
       }}
     />
     <Stack.Screen

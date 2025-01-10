@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router'; // Import the useRouter hook
 import { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import Intro from './Intro';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 type RootStackParamList = {
   Home: undefined;
@@ -38,7 +38,6 @@ export default function Settings() {
       // Now share the file
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(exportPath);
-        Alert.alert('Success', `Data exported and ready to share!`);
       } else {
         Alert.alert('Error', 'Sharing is not available on this device.');
       }
@@ -48,33 +47,65 @@ export default function Settings() {
     }
   }
 
+  const DeleteDB = async () => {
+    // Show confirmation alert
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete the database? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Delete Cancelled'),
+          style: 'cancel',
+        },
+        {
+          text: 'OK', // Confirm button
+          onPress: async () => {
+            try {
+              await db.runAsync('DELETE FROM thoughts');
+              Alert.alert('Success', 'Database has been deleted.');
+            } catch (error) {
+              console.error('Error deleting database:', error);
+              Alert.alert('Error', 'Failed to delete the database.');
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+  
   
 
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
         <SafeAreaView style={styles.safeAreaView}>
             <Text style={styles.title}>Settings</Text>
-            
-            <Text style={styles.normalText}>
-                Show me the intro animation
-            </Text>
+            <View style={styles.toolActions}>
+              <Text style={styles.normalText}>
+                  Show me the intro animation
+              </Text>
 
-            <TouchableOpacity 
-                style={styles.customButton}
-                onPress={showIntro} // Attach the showIntro function here
-            >
-                <Text style={styles.whiteText}>Show</Text>
-            </TouchableOpacity>
-
-            <Text style={styles.normalText}>
-                Send me the Database
-            </Text>
-            <TouchableOpacity 
-                style={styles.customButton}
-                onPress={exportData}
-            >
-                <Text style={styles.whiteText}>Export DB</Text>
-            </TouchableOpacity>
+              <TouchableOpacity onPress={showIntro}>
+                <Icon name="videocam-outline" color={'#9d9099'} size={25} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.toolActions}>
+              <Text style={styles.normalText}>
+                  Send me the Database
+              </Text>
+              <TouchableOpacity onPress={exportData}>
+                <Icon name="paper-plane-outline" color={'#9d9099'} size={25} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.toolActions}>
+              <Text style={styles.normalText}>
+                  Delete the Database
+              </Text>
+              <TouchableOpacity onPress={DeleteDB}>
+              <Icon name="trash-outline" color={'#9d9099'} size={25} />
+              </TouchableOpacity>
+            </View>
         </SafeAreaView>
     </ScrollView>
   );
@@ -129,4 +160,15 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     color: '#fff',
   },
+  actionIcon: {
+    width: 20,
+    height: 20,
+    marginHorizontal: 3,
+  },
+  toolActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+    marginRight: 10, 
+},
 });
