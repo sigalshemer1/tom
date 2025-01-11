@@ -126,8 +126,7 @@ const Layout = () => {
 
   useEffect(() => {
     if (isReady && isFirstTime) {
-      //router.push('/intro/Intro'); // Navigate to the first intro screen
-      console.log('First time');
+      router.push('./Intro'); 
       setIsFirstTime(false);
     }
   }, [isFirstTime, isReady]);

@@ -1,103 +1,103 @@
 import { Video, AVPlaybackStatus } from 'expo-av';
-import { StyleSheet, View, TouchableOpacity, Text, SafeAreaView, ScrollView,StatusBar } from 'react-native';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { StyleSheet, View, TouchableOpacity, Text, ScrollView, StatusBar } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { DeviceMotion } from 'expo-sensors';
 
 const birdsA = require('./videos/birds.mp4');
 const birdsC = require('./videos/birdsC.mp4');
 
 export default function Intro() {
   const [isButtonVisible, setIsButtonVisible] = useState(false);
-  const [btnClicked, setBtnClicked] = useState(false);
+  const [currentPlayer, setCurrentPlayer] = useState<'playerA' | 'playerC'>('playerA');
+  const isNavigating = useRef(false); // Prevent multiple navigation triggers
   const navigation = useNavigation();
-  const [navigateToHome, setNavigateToHome] = useState(false);
-  const isNavigating = useRef(false);
 
   const playerA = useRef<Video>(null);
   const playerC = useRef<Video>(null);
-  const [currentPlayer, setCurrentPlayer] = useState<'playerA' | 'playerC'>('playerA');
 
-  useEffect(() => {
-    if (navigateToHome) {
-      setIsButtonVisible(false);
-      navigation.navigate('Home');
-      setTimeout(() => {
-        navigation.replace('SettingsMain');
-      }, 0);
-    }
-  }, [navigateToHome, navigation]);
-
-  const replacePlayer = useCallback(() => {
+  // Function to switch players and manage video playback
+  const replacePlayer = useCallback(async () => {
     if (currentPlayer === 'playerA' && playerA.current) {
-      setIsButtonVisible(false); // Hide the button immediately
-      playerA.current.pauseAsync();
-      setCurrentPlayer('playerC');
+      setIsButtonVisible(false); // Hide the button
+      await playerA.current.unloadAsync(); // Free memory for playerA
+      setCurrentPlayer('playerC'); // Switch to playerC
       if (playerC.current) {
-        playerC.current.playAsync();
+        await playerC.current.playAsync();
       }
-    }else if (currentPlayer === 'playerC') {
-      setBtnClicked(true);
     }
   }, [currentPlayer]);
 
-  const handlePlaybackStatusUpdateA = (status: AVPlaybackStatus) => {
-    if (status.isLoaded && status.isPlaying && !isButtonVisible && currentPlayer === 'playerA') {
-      // Show the button after 4 seconds
-      setTimeout(() => {
-        if (currentPlayer === 'playerA') {
-          setIsButtonVisible(true);
-        }
-      }, 4000);
-    }
-    if (status.didJustFinish && currentPlayer === 'playerA') {
-      replacePlayer();
-    }
-  };
-
-
+  // Handle navigation when playerC finishes playback
   const handlePlaybackStatusUpdateC = (status: AVPlaybackStatus) => {
-    if (status.didJustFinish && currentPlayer === 'playerC') {
+    if (status.didJustFinish && currentPlayer === 'playerC' && !isNavigating.current) {
       isNavigating.current = true;
-      setNavigateToHome(true);
+      navigation.navigate('Home');
+      setTimeout(() => {
+        navigation.replace('SettingsMain');
+      }, 0); // Replace immediately after navigating
     }
   };
+
+  // Show button 4 seconds after playerA starts playing
+  useEffect(() => {
+    if (currentPlayer === 'playerA') {
+      const timeoutId = setTimeout(() => {
+        setIsButtonVisible(true);
+      }, 4000);
+      return () => clearTimeout(timeoutId); // Cleanup timeout
+    }
+  }, [currentPlayer]);
+
+  // Cleanup function to reset navigation state
+  useEffect(() => {
+    return () => {
+      isNavigating.current = false; // Reset navigation flag on unmount
+    };
+  }, []);
 
   return (
     <ScrollView contentContainerStyle={styles.scrollView}>
-      <StatusBar barStyle="dark-content" hidden /> 
-        <View style={styles.root}>
-          <View style={styles.contentContainer}>
-            {currentPlayer === 'playerA' && (
-              <Video
-                ref={playerA}
-                source={birdsA}
-                style={styles.video}
-                resizeMode="cover"
-                shouldPlay
-                isLooping={false}
-                onPlaybackStatusUpdate={handlePlaybackStatusUpdateA}
-              />
-            )}
-            {currentPlayer === 'playerC' && (
-              <Video
-                ref={playerC}
-                source={birdsC}
-                style={styles.video}
-                resizeMode="cover"
-                shouldPlay
-                isLooping={false}
-                onPlaybackStatusUpdate={handlePlaybackStatusUpdateC}
-              />
-            )}
+      <StatusBar barStyle="dark-content" hidden />
+      <View style={styles.root}>
+        <View style={styles.contentContainer}>
+          {/* Player A */}
+          {currentPlayer === 'playerA' && (
+            <Video
+              ref={playerA}
+              source={birdsA}
+              style={styles.video}
+              resizeMode="cover"
+              shouldPlay
+              isLooping={false}
+              onPlaybackStatusUpdate={(status) => {
+                if (status.didJustFinish && currentPlayer === 'playerA') {
+                  replacePlayer(); // Switch to playerC when playerA finishes
+                }
+              }}
+            />
+          )}
 
-            {isButtonVisible && currentPlayer === 'playerA' && (
-              <TouchableOpacity style={styles.button} onPress={replacePlayer}>
-                <Text style={styles.buttonText}>Shake me</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          {/* Player C */}
+          {currentPlayer === 'playerC' && (
+            <Video
+              ref={playerC}
+              source={birdsC}
+              style={styles.video}
+              resizeMode="cover"
+              shouldPlay
+              isLooping={false}
+              onPlaybackStatusUpdate={handlePlaybackStatusUpdateC}
+            />
+          )}
+
+          {/* Shake Me Button */}
+          {isButtonVisible && currentPlayer === 'playerA' && (
+            <TouchableOpacity style={styles.button} onPress={replacePlayer}>
+              <Text style={styles.buttonText}>Shake me</Text>
+            </TouchableOpacity>
+          )}
         </View>
+      </View>
     </ScrollView>
   );
 }
@@ -105,7 +105,7 @@ export default function Intro() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#000', // Ensure background is set
+    backgroundColor: '#000', // Black background
   },
   contentContainer: {
     flex: 1,
@@ -135,8 +135,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 5,
-    height:100,
-    width:100,
+    height: 100,
+    width: 100,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
@@ -151,9 +151,5 @@ const styles = StyleSheet.create({
   scrollView: {
     padding: 0,
     flexGrow: 1,
-  },
-  safeAreaView: {
-    flex: 1,
-    overflow: 'visible',
   },
 });

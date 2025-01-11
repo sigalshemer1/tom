@@ -80,15 +80,6 @@ const Home = () => {
           Gradually, you will be able to recognize when a wave is approaching and learn what helps you stop it.
           </Text>
         </View>
-
-        {/* <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.customButton}
-            onPress={() => Linking.openURL('https://www.youtube.com/embed/yaahVCL9Cdw?si=8mWHmYz4JyOufMrh')}
-          >
-            <Text style={styles.buttonText}>Watch Introduction Video</Text>
-          </TouchableOpacity>
-        </View> */}
       </View>
       </SafeAreaView>
     </ScrollView>
