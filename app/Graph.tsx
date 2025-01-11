@@ -118,8 +118,6 @@ export function Content() {
       throw error;
     }
   };
-  
-  
 
   const fetchAllThoughts = async () => {
     try {
@@ -159,11 +157,9 @@ export function Content() {
   // Function to update highlighted dates
   const updateHighlightedDates = (data) => {
     const highlighted = data.reduce((acc, item) => {
-      // Check if the date contains 'T', indicating it might be in ISO format
-      const date = item.created.includes('T') ? item.created.split('T')[0] : item.created.split(' ')[0]; // Get the date part (YYYY-MM-DD)
-  
+      const date = item.created.includes('T') ? item.created.split('T')[0] : item.created.split(' ')[0];
       if (!acc[date]) { 
-        acc[date] = { selected: true, marked: true, selectedColor: '#715868' };
+        acc[date] = { selected: true, marked: true, selectedColor: '#bf4da2' };
       }
       return acc;
     }, {});
@@ -182,29 +178,80 @@ export function Content() {
   const graphHeight = 250;
   const padding = 40;
 
+  // const points = thoughts.map((thought, index) => {
+  //   const x = (index / (thoughts.length - 1)) * (graphWidth - padding * 2) + padding;
+  //   const y = graphHeight - ((thought.level - 1) / (5 - 1)) * (graphHeight - padding);
+  //   return { x, y, label: thought.created, level: thought.level };
+  // });
+
   const points = thoughts.map((thought, index) => {
-    const x = (index / (thoughts.length - 1)) * (graphWidth - padding * 2) + padding;
+    const x = thoughts.length === 1
+      ? graphWidth / 2 
+      : (index / (thoughts.length - 1)) * (graphWidth - padding * 2) + padding;
+  
     const y = graphHeight - ((thought.level - 1) / (5 - 1)) * (graphHeight - padding);
+  
     return { x, y, label: thought.created, level: thought.level };
   });
 
+  if (points.length === 1) {
+    points[0].x = graphWidth / 2;
+    points[0].y = graphHeight / 2;
+  }
+
   const handleTouch = (event) => {
     const { locationX } = event.nativeEvent;
-    if (points.length === 0) return;
   
+    if (points.length === 0) {
+      return;
+    }
+  
+    // If there's only one point, always show the tooltip for that point
+    if (points.length === 1) {
+      const timePart = points[0].label.split(' ')[1]; // Extract the time portion from the timestamp
+      const formattedTime = timePart.split(':').slice(0, 2).join(':'); // Format as HH:MM
+  
+      setTooltip({
+        x: points[0].x,
+        y: points[0].y,
+        value: formattedTime, // Show time in the tooltip
+      });
+  
+      return; // No need to find the closest point since there's only one
+    }
+  
+    // Logic for multiple points (when there are more than 1 point)
     const closestPoint = points.reduce((prev, curr) =>
       Math.abs(curr.x - locationX) < Math.abs(prev.x - locationX) ? curr : prev
     );
-
-    const timePart = closestPoint.label.split(' ')[1];  // This will give you 'HH:mm:ss'
+  
+    const timePart = closestPoint.label.split(' ')[1];
     const formattedTime = timePart.split(':').slice(0, 2).join(':');
   
     setTooltip({
       x: closestPoint.x,
       y: closestPoint.y,
-      value: formattedTime,  // Show only the hh:mm part
+      value: formattedTime,
     });
   };
+  
+  // const handleTouch = (event) => {
+  //   const { locationX } = event.nativeEvent;
+  //   if (points.length === 0) return;
+  
+  //   const closestPoint = points.reduce((prev, curr) =>
+  //     Math.abs(curr.x - locationX) < Math.abs(prev.x - locationX) ? curr : prev
+  //   );
+
+  //   const timePart = closestPoint.label.split(' ')[1];  // This will give you 'HH:mm:ss'
+  //   const formattedTime = timePart.split(':').slice(0, 2).join(':');
+  
+  //   setTooltip({
+  //     x: closestPoint.x,
+  //     y: closestPoint.y,
+  //     value: formattedTime,  // Show only the hh:mm part
+  //   });
+  // };
   
 
   const yAxisOffset = 4;
