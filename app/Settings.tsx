@@ -20,9 +20,9 @@ export default function Settings() {
     const navigation = useNavigation<SettingsNavigationProp>();
   const db = useSQLiteContext();
 
-  
+
   const showIntro = async () => {
-    db.runAsync(`DELETE FROM isFirst`);
+    await db.runAsync(`DELETE FROM isFirst`);
     navigation.navigate('Home', { resetIntro: true });
   }
 
@@ -84,7 +84,7 @@ export default function Settings() {
     <ScrollView contentContainerStyle={styles.scrollView}>
         <SafeAreaView style={styles.safeAreaView}>
             <Text style={styles.title}>Settings</Text>
-            <View style={styles.toolActions}>
+            {/*<View style={styles.toolActions}>
               <Text style={styles.normalText}>
                   Show me the intro animation
               </Text>
@@ -92,7 +92,7 @@ export default function Settings() {
               <TouchableOpacity onPress={showIntro}>
                 <Icon name="videocam-outline" color={'#9d9099'} size={25} />
               </TouchableOpacity>
-            </View>
+            </View>*/}
             <View style={styles.toolActions}>
               <Text style={styles.normalText}>
                   Send me the Database

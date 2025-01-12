@@ -4,7 +4,6 @@ import { useSQLiteContext } from 'expo-sqlite';
 import {  StyleSheet, View, TouchableOpacity, Text, ScrollView, SafeAreaView, Image} from 'react-native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useIsFocused } from '@react-navigation/native';
-import { useRoute } from '@react-navigation/native';
 import logo from '../assets/images/logo.png';
 
 const birdsA = require('./videos/birds.mp4');
@@ -23,12 +22,11 @@ const Home = ({ navigation }) => {
   const playerA = useRef<Video>(null);
   const playerC = useRef<Video>(null);
 
-  const route = useRoute();
-  const { resetIntro } = route.params || {};
 
   const checkFirstTime = async () => {
     try {
       const result = await db.getAllAsync('SELECT * FROM isFirst;');
+      console.log("LENGTH = ",result.length);
       if (result.length === 0) {
         await db.runAsync('INSERT INTO isFirst (first) VALUES (false)');
         setIsFirstTime(true);
@@ -42,12 +40,8 @@ const Home = ({ navigation }) => {
   };
 
   useEffect(() => {
-    if (resetIntro) {
-      // Set it to true, as it should behave like first-time
-      setIsFirstTime(true);
-    }
-    checkFirstTime(); // Check isFirst when component mounts
-
+    checkFirstTime();
+console.log("IS FIRST? ",isFirstTime);
     if (isFirstTime === null) {
       return; // Wait for isFirstTime to be set
     }
@@ -59,7 +53,7 @@ const Home = ({ navigation }) => {
         playerA.current.playAsync(); // Play birdsA video as soon as the page loads
       }
     }
-  }, [isFirstTime, resetIntro]);
+  }, [isFirstTime]);
 
 
   const replacePlayer = useCallback(async () => {

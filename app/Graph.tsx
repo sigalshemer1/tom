@@ -155,6 +155,23 @@ export function Content() {
   
 
   // Function to update highlighted dates
+  // const updateHighlightedDates = (data) => {
+  //   const highlighted = data.reduce((acc, item) => {
+  //     const date = item.created.includes('T') ? item.created.split('T')[0] : item.created.split(' ')[0];
+  //     if (!acc[date]) { 
+  //       acc[date] = { selected: true, marked: true, selectedColor: '#bf4da2' };
+  //     }
+  //     return acc;
+  //   }, {});
+  
+  //   setHighlightedDates((prev) => {
+  //     if (JSON.stringify(prev) !== JSON.stringify(highlighted)) {
+  //       return highlighted; // Update only if there's a difference
+  //     }
+  //     return prev; // No update needed
+  //   });
+  // };
+  
   const updateHighlightedDates = (data) => {
     const highlighted = data.reduce((acc, item) => {
       const date = item.created.includes('T') ? item.created.split('T')[0] : item.created.split(' ')[0];
@@ -164,11 +181,17 @@ export function Content() {
       return acc;
     }, {});
   
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (data.some(item => item.created.includes(today))) {
+      highlighted[today] = { selected: true, marked: true, selectedColor: '#bf4da2' };
+    }
+  
     setHighlightedDates((prev) => {
       if (JSON.stringify(prev) !== JSON.stringify(highlighted)) {
-        return highlighted; // Update only if there's a difference
+        return highlighted; 
       }
-      return prev; // No update needed
+      return prev; 
     });
   };
   
