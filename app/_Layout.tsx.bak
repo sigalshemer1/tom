@@ -6,11 +6,12 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import Icon from 'react-native-vector-icons/Ionicons';
 import React, { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StyleSheet,View ,Image,Text } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
-
+import { useNavigation } from '@react-navigation/native';
 import logo from '../assets/images/logo.png';
 
 import SettingsScreen from './Settings';
@@ -26,6 +27,9 @@ import 'react-native-reanimated';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
+
+  const [isFirstTime, setIsFirstTime] = useState(null);
+  const navigation = useNavigation();
 
 // SplashScreen.preventAutoHideAsync();
 export const HeaderLogo = () => (
@@ -79,15 +83,74 @@ const TipsNavigator = () => (
   </Stack.Navigator>
 );
 
+const IntroNavigator = () => (
+  <Stack.Navigator>
+    <Stack.Screen
+      name="SettingsMain"
+      component={SettingsScreen}
+      options={{
+        headerTitle: () => <HeaderLogo />,
+        headerStyle: styles.header,
+        headerTintColor: '#6F5D6A',
+        headerTitleStyle: styles.headerTitle,
+      }}
+    />
+    <Stack.Screen
+      name="Intro"
+      component={IntroScreen}
+      options={{
+        headerShown: false, 
+      }}
+    />
+  </Stack.Navigator>
+);
+
 
 
 const Layout = () => {
 
   const colorScheme = useColorScheme();
+  // const [isFirstTime, setIsFirstTime] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkFirstTime = async () => {
+      const isFirstVisit = await AsyncStorage.getItem('isFirstTime');
+      if (isFirstVisit === null) {
+        setIsFirstTime(true);
+      } else {
+        setIsFirstTime(false);
+      }
+    };
+
+    checkFirstTime();
+  }, []);
+
+  // useEffect(() => {
+  //   if (isReady && isFirstTime) {
+  //     router.push('./Intro'); 
+  //     setIsFirstTime(false);
+  //   }
+  // }, [isFirstTime, isReady]);
+
+  useEffect(() => {
+    setIsReady(true);
+  }, []);
+
+  if (!isReady) {
+    return null;
+  }
+
   
+
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <SQLiteProvider databaseName="tom.db" onInit={migrateDbIfNeeded}>
+        {isFirstTime && (
+            <View><Text>Intro</Text></View>
+        )}
+        {!isFirstTime && (
             <Tab.Navigator 
                screenOptions={{
                  tabBarStyle: styles.tabBar,
@@ -138,7 +201,7 @@ const Layout = () => {
               />
               <Tab.Screen
                 name="Settings"
-                component={SettingsScreen}
+                component={IntroNavigator}
                 options={{
                   headerShown: false,  
                   tabBarIcon: ({ color, size }) => (
@@ -147,14 +210,32 @@ const Layout = () => {
                 }}
               />
             </Tab.Navigator>
+        )}
       </SQLiteProvider>
     </ThemeProvider>
 
   );
 };
 
+const getFirstTime = async (db) => {
+    // if(isFirstTime){
+      try {
+        db.runAsync(`DELETE FROM isFirst`);
+        const result = await db.getAllAsync('SELECT * FROM isFirst;');
+        if(result.length === 0) {
+          //await db.runAsync('INSERT INTO isFirst (first) VALUES (false)')
+          navigation.navigate('Intro');
+          setIsFirstTime(false);
+        } 
+      } catch (error) {
+        console.error('Error in getFirstTime:', error);
+        throw error;
+      }
+  };
+
 
 async function migrateDbIfNeeded(db: SQLiteDatabase) {
+  getFirstTime(db);
   const DATABASE_VERSION = 1;
   let { user_version: currentDbVersion } = await db.getFirstAsync<{ user_version: number }>(
     'PRAGMA user_version'
@@ -173,9 +254,10 @@ async function migrateDbIfNeeded(db: SQLiteDatabase) {
       `);
     await db.execAsync(`
       PRAGMA journal_mode = 'wal';
-      CREATE TABLE IF NOT EXISTS isFirst (id INTEGER PRIMARY KEY NOT NULL, first BOLEAN DEFAULT fALSE);
+      CREATE TABLE IF NOT EXISTS isFirst (id INTEGER PRIMARY KEY NOT NULL, first BOLEAN DEFAULT TRUE);
       `);
     currentDbVersion = 1;
+ 
   }
   
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);

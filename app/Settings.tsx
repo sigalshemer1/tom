@@ -20,10 +20,13 @@ export default function Settings() {
     const navigation = useNavigation<SettingsNavigationProp>();
   const db = useSQLiteContext();
 
+  
   const showIntro = async () => {
-    // Navigate to the Intro screen
-    navigation.navigate('Intro');
+    db.runAsync(`DELETE FROM isFirst`);
+    navigation.navigate('Home', { resetIntro: true });
   }
+
+
   const exportData = async () => {
     const data = await db.getAllAsync('SELECT * FROM thoughts');
 

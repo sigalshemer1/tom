@@ -32,9 +32,9 @@ export default function Intro() {
     if (status.didJustFinish && currentPlayer === 'playerC' && !isNavigating.current) {
       isNavigating.current = true;
       navigation.navigate('Home');
-      setTimeout(() => {
-        navigation.replace('SettingsMain');
-      }, 0); // Replace immediately after navigating
+      // setTimeout(() => {
+      //   navigation.replace('SettingsMain');
+      // }, 0); // Replace immediately after navigating
     }
   };
 
