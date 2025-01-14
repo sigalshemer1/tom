@@ -20,14 +20,9 @@ const birdsC = require('./videos/birdsC.mp4');
 const Home = ({ navigation }) => {
   const db = useSQLiteContext();
   const isFocused = useIsFocused();
-  const { 
-    resetIntroFlag, 
-    setResetIntroFlag,
-    isFirstTime, 
-    setIsFirstTime,
-    isButtonVisible, 
-    setIsButtonVisible 
-  } = useAppContext();
+  const { resetIntroFlag, setResetIntroFlag } = useAppContext(); // Using AppContext
+  const [isFirstTime, setIsFirstTime] = useState(null);
+  const [isButtonVisible, setIsButtonVisible] = useState(false);
   const [isIntroPlaying, setIsIntroPlaying] = useState(false);
   const [currentPlayer, setCurrentPlayer] = useState<'playerA' | 'playerC'>('playerA');
   const [isButtonVisibleEarly, setIsButtonVisibleEarly] = useState(false);
@@ -51,7 +46,6 @@ const Home = ({ navigation }) => {
 
   const resetIntroLogic = async () => {
     try {
-      setCurrentPlayer('playerA');
       await db.runAsync('DELETE FROM isFirst');
       setIsFirstTime(true);
       setIsIntroPlaying(true);
@@ -78,19 +72,17 @@ const Home = ({ navigation }) => {
     }
   }, [resetIntroFlag, isFirstTime]);
 
-
   const replacePlayer = useCallback(async () => {
     if (currentPlayer === 'playerA' && playerA.current) {
       if (playerC.current) {
         await playerC.current.loadAsync(birdsC, {}, false);
       }
-  
+
       setCurrentPlayer('playerC');
       if (playerC.current) {
         await playerC.current.playAsync();
       }
-  
-      setIsButtonVisible(false); // Hide the button when playerC starts
+
       setTimeout(async () => {
         if (playerA.current) {
           await playerA.current.unloadAsync();
@@ -99,32 +91,25 @@ const Home = ({ navigation }) => {
     }
   }, [currentPlayer]);
 
+  const handlePlaybackStatusUpdateC = (status) => {
+    if (status.didJustFinish && currentPlayer === 'playerC') {
+      setIsIntroPlaying(false);
+      setIsButtonVisible(false);
+    }
+  };
+
   const handlePlaybackStatusUpdateA = (status) => {
     if (status.isLoaded) {
       const remainingTime = status.durationMillis - status.positionMillis;
-  
-      if (remainingTime <= 4000 && !isButtonVisibleEarly) {
-        setIsButtonVisibleEarly(true); // Show button in the last 4 seconds
+
+      if (remainingTime <= 5000) {
+        setIsButtonVisibleEarly(true);
       }
-  
+
       if (status.didJustFinish) {
-        replacePlayer(); // Switch to playerC when playerA finishes
+        replacePlayer();
       }
     }
-  };
-  
-  const handlePlaybackStatusUpdateC = (status) => {
-    if (status.didJustFinish && currentPlayer === 'playerC') {
-      setIsIntroPlaying(false); // End the intro
-      setIsButtonVisible(false); // Hide button after playerC finishes
-      setIsButtonVisibleEarly(false); // Reset early visibility for the next playback
-    }
-  };
-  
-  const handleButtonPress = () => {
-    setIsButtonVisible(false); 
-    setIsButtonVisibleEarly(false);
-    replacePlayer(); 
   };
 
   const insertThought = async (level) => {
@@ -136,6 +121,7 @@ const Home = ({ navigation }) => {
   };
 
   useEffect(() => {
+    // Hide/show the tab bar based on isFocused and isIntroPlaying
     if (isFocused && isIntroPlaying) {
       navigation.setOptions({ tabBarStyle: { display: 'none' } });
     } else {
@@ -174,7 +160,7 @@ const Home = ({ navigation }) => {
               />
             )}
             {(isButtonVisible || isButtonVisibleEarly) && (
-              <TouchableOpacity style={styles.button} onPress={handleButtonPress}>
+              <TouchableOpacity style={styles.button} onPress={replacePlayer}>
                 <Text style={styles.buttonText}>Shake me</Text>
               </TouchableOpacity>
             )}

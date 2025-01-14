@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router'; // Import the useRouter hook
 import { useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useAppContext } from './AppContext';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 type RootStackParamList = {
@@ -18,14 +19,20 @@ type SettingsNavigationProp = StackNavigationProp<RootStackParamList, 'Intro'>;
 
 export default function Settings() {
     const navigation = useNavigation<SettingsNavigationProp>();
+    const { resetIntroFlag, setResetIntroFlag ,setIsButtonVisible} = useAppContext();
   const db = useSQLiteContext();
 
 
   const showIntro = async () => {
-    await db.runAsync(`DELETE FROM isFirst`);
-    navigation.navigate('Home', { resetIntro: true });
+    setIsButtonVisible(false);
+    setResetIntroFlag(true);     
   }
-
+  
+  useEffect(() => {
+    if (resetIntroFlag===true) {
+      navigation.navigate('Home');
+    }
+  }, [resetIntroFlag]);
 
   const exportData = async () => {
     const data = await db.getAllAsync('SELECT * FROM thoughts');
@@ -84,7 +91,7 @@ export default function Settings() {
     <ScrollView contentContainerStyle={styles.scrollView}>
         <SafeAreaView style={styles.safeAreaView}>
             <Text style={styles.title}>Settings</Text>
-            {/*<View style={styles.toolActions}>
+            <View style={styles.toolActions}>
               <Text style={styles.normalText}>
                   Show me the intro animation
               </Text>
@@ -92,7 +99,7 @@ export default function Settings() {
               <TouchableOpacity onPress={showIntro}>
                 <Icon name="videocam-outline" color={'#9d9099'} size={25} />
               </TouchableOpacity>
-            </View>*/}
+            </View>
             <View style={styles.toolActions}>
               <Text style={styles.normalText}>
                   Send me the Database

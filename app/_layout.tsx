@@ -10,6 +10,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StyleSheet,View ,Image,Text } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import AppContext from './AppContext';
 
 import logo from '../assets/images/logo.png';
 
@@ -86,70 +87,71 @@ const Layout = () => {
   const colorScheme = useColorScheme();
   
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <SQLiteProvider databaseName="tom.db" onInit={migrateDbIfNeeded}>
-            <Tab.Navigator 
-               screenOptions={{
-                 tabBarStyle: styles.tabBar,
-                 tabBarActiveTintColor: '#bf4da2',
-                 tabBarInactiveTintColor: '#6F5D6A',
-                 headerStyle: styles.header,
-                 headerTintColor: '#6F5D6A',
-                 headerTitle: () => <HeaderLogo />,
-               }}
-            >
-              <Tab.Screen
-                name="Home"
-                component={HomeScreen}
-                options={{
-                  headerShown: false,
-                  tabBarIcon: ({ color, size }) => (
-                    <Icon name="home-outline" color={color} size={size} />
-                  ),
+    <AppContext>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <SQLiteProvider databaseName="tom.db" onInit={migrateDbIfNeeded}>
+              <Tab.Navigator 
+                screenOptions={{
+                  tabBarStyle: styles.tabBar,
+                  tabBarActiveTintColor: '#bf4da2',
+                  tabBarInactiveTintColor: '#6F5D6A',
+                  headerStyle: styles.header,
+                  headerTintColor: '#6F5D6A',
+                  headerTitle: () => <HeaderLogo />,
                 }}
-              />
-              <Tab.Screen
-                name="Your Graph"
-                component={GraphScreen}
-                options={{
-                  tabBarIcon: ({ color, size }) => (
-                    <Icon name="bar-chart-outline" color={color} size={size} />
-                  ),
-                }}
-              />
-              <Tab.Screen
-                name="Tips"
-                component={TipsNavigator}
-                options={{
-                  headerShown: false,
-                  tabBarIcon: ({ color, size }) => (
-                    <Icon name="bulb-outline" color={color} size={size} />
-                  ),
-                }}
-              />
-              <Tab.Screen
-                name="MyTools"
-                component={MyToolsScreen}
-                options={{
-                  tabBarIcon: ({ color, size }) => (
-                    <Icon name="hammer-outline" color={color} size={size} />
-                  ),
-                }}
-              />
-              <Tab.Screen
-                name="Settings"
-                component={SettingsScreen}
-                options={{
-                  headerShown: false,  
-                  tabBarIcon: ({ color, size }) => (
-                    <Icon name="settings-outline" color={color} size={size} />
-                  ),
-                }}
-              />
-            </Tab.Navigator>
-      </SQLiteProvider>
-    </ThemeProvider>
-
+              >
+                <Tab.Screen
+                  name="Home"
+                  component={HomeScreen}
+                  options={{
+                    headerShown: false,
+                    tabBarIcon: ({ color, size }) => (
+                      <Icon name="home-outline" color={color} size={size} />
+                    ),
+                  }}
+                />
+                <Tab.Screen
+                  name="Your Graph"
+                  component={GraphScreen}
+                  options={{
+                    tabBarIcon: ({ color, size }) => (
+                      <Icon name="bar-chart-outline" color={color} size={size} />
+                    ),
+                  }}
+                />
+                <Tab.Screen
+                  name="Tips"
+                  component={TipsNavigator}
+                  options={{
+                    headerShown: false,
+                    tabBarIcon: ({ color, size }) => (
+                      <Icon name="bulb-outline" color={color} size={size} />
+                    ),
+                  }}
+                />
+                <Tab.Screen
+                  name="MyTools"
+                  component={MyToolsScreen}
+                  options={{
+                    tabBarIcon: ({ color, size }) => (
+                      <Icon name="hammer-outline" color={color} size={size} />
+                    ),
+                  }}
+                />
+                <Tab.Screen
+                  name="Settings"
+                  component={SettingsScreen}
+                  options={{
+                    headerShown: false,  
+                    tabBarIcon: ({ color, size }) => (
+                      <Icon name="settings-outline" color={color} size={size} />
+                    ),
+                  }}
+                />
+              </Tab.Navigator>
+        </SQLiteProvider>
+      </ThemeProvider>
+    </AppContext>
   );
 };
 
