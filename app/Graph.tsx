@@ -28,7 +28,6 @@ export function Content() {
   const [highlightedDates, setHighlightedDates] = useState({});
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [isTimePickerVisible, setTimePickerVisibility] = useState(false); 
-  const [tooltip, setTooltip] = useState<{ x: number; y: number; value: string } | null>(null);
 
   const db = useSQLiteContext();
 
@@ -144,7 +143,6 @@ export function Content() {
               onDayPress={(day) => {
                 onDateSelect(new Date(day.dateString)); // Trigger date selection logic
                 onClose(); // Close the calendar modal
-                setTooltip(null); 
               }}
             />
           </View>
@@ -198,96 +196,50 @@ export function Content() {
   
 
   const graphWidth = screenWidth - 40;
-  const graphHeight = 250;
-  const padding = 40;
+const graphHeight = 250;
+const padding = 40;
 
-  // const points = thoughts.map((thought, index) => {
-  //   const x = (index / (thoughts.length - 1)) * (graphWidth - padding * 2) + padding;
-  //   const y = graphHeight - ((thought.level - 1) / (5 - 1)) * (graphHeight - padding);
-  //   return { x, y, label: thought.created, level: thought.level };
-  // });
+// Adjust the points to map to a 24-hour x-axis
+const points = thoughts.map((thought) => {
+  const date = new Date(thought.created);
+  const hours = date.getHours() + date.getMinutes() / 60; // Calculate fractional hours
 
-  const points = thoughts.map((thought, index) => {
-    const x = thoughts.length === 1
-      ? graphWidth / 2 
-      : (index / (thoughts.length - 1)) * (graphWidth - padding * 2) + padding;
-  
-    const y = graphHeight - ((thought.level - 1) / (5 - 1)) * (graphHeight - padding);
-  
-    return { x, y, label: thought.created, level: thought.level };
-  });
+  // Map the hours to the x-axis range
+  const x = ((hours / 24) * (graphWidth - padding * 2)) + padding;
 
-  if (points.length === 1) {
-    points[0].x = graphWidth / 2;
-    points[0].y = graphHeight / 2;
-  }
+  // Map the thought level to the y-axis range
+  const y = graphHeight - ((thought.level - 1) / (5 - 1)) * (graphHeight - padding);
 
-  const handleTouch = (event) => {
-    const { locationX } = event.nativeEvent;
-  
-    if (points.length === 0) {
-      return;
-    }
-  
-    // If there's only one point, always show the tooltip for that point
-    if (points.length === 1) {
-      const timePart = points[0].label.split(' ')[1]; // Extract the time portion from the timestamp
-      const formattedTime = timePart.split(':').slice(0, 2).join(':'); // Format as HH:MM
-  
-      setTooltip({
-        x: points[0].x,
-        y: points[0].y,
-        value: formattedTime, // Show time in the tooltip
-      });
-  
-      return; // No need to find the closest point since there's only one
-    }
-  
-    // Logic for multiple points (when there are more than 1 point)
-    const closestPoint = points.reduce((prev, curr) =>
-      Math.abs(curr.x - locationX) < Math.abs(prev.x - locationX) ? curr : prev
+  return { x, y, label: thought.created, level: thought.level };
+});
+
+// Generate the path for the graph
+const yAxisOffset = 4;
+const graphPath = points
+  .map((point, index) => {
+    const adjustedY = graphHeight - ((point.level - 1) / (5 - 1)) * (graphHeight - padding) - yAxisOffset;
+    return index === 0 ? `M${point.x},${adjustedY}` : `L${point.x},${adjustedY}`;
+  })
+  .join(' ');
+
+// Render the x-axis labels for 24 hours
+const renderXAxisLabels = () => {
+  const labels = [];
+  for (let i = 0; i <= 24; i += 3) { // Display labels every 3 hours
+    const x = ((i / 24) * (graphWidth - padding * 2)) + padding;
+    labels.push(
+      <SvgText key={i} x={x} y={graphHeight + 15} fontSize="10" textAnchor="middle" fill="#000">
+        {i} {/* Display only the hour */}
+      </SvgText>
     );
-  
-    const timePart = closestPoint.label.split(' ')[1];
-    const formattedTime = timePart.split(':').slice(0, 2).join(':');
-  
-    setTooltip({
-      x: closestPoint.x,
-      y: closestPoint.y,
-      value: formattedTime,
-    });
-  };
-  
-  // const handleTouch = (event) => {
-  //   const { locationX } = event.nativeEvent;
-  //   if (points.length === 0) return;
-  
-  //   const closestPoint = points.reduce((prev, curr) =>
-  //     Math.abs(curr.x - locationX) < Math.abs(prev.x - locationX) ? curr : prev
-  //   );
+  }
+  return labels;
+};
 
-  //   const timePart = closestPoint.label.split(' ')[1];  // This will give you 'HH:mm:ss'
-  //   const formattedTime = timePart.split(':').slice(0, 2).join(':');
-  
-  //   setTooltip({
-  //     x: closestPoint.x,
-  //     y: closestPoint.y,
-  //     value: formattedTime,  // Show only the hh:mm part
-  //   });
-  // };
-  
 
-  const yAxisOffset = 4;
-  const graphPath = points
-    .map((point, index) => {
-      const adjustedY = graphHeight - ((point.level - 1) / (5 - 1)) * (graphHeight - padding) - yAxisOffset;
-      return index === 0 ? `M${point.x},${adjustedY}` : `L${point.x},${adjustedY}`;
-    })
-    .join(' ');
-
-    const formatDate = (date: Date) => {
-      return date.toLocaleDateString('en-GB'); // This formats the date as dd/MM/yyyy
-    };
+const formatDate = (date: Date) => {
+  return date.toLocaleDateString('en-GB'); // This formats the date as dd/MM/yyyy
+};
 
   return (
     <SafeAreaView style={styles.safeAreaView}>
@@ -332,11 +284,10 @@ export function Content() {
             <Text style={styles.noDataText}>No records to show</Text>
           ) : (
             <View style={styles.chartWrapper}>
-              <Svg width={graphWidth} height={graphHeight} onTouchStart={handleTouch}>
+              <Svg width={graphWidth} height={graphHeight + 40}> 
                 <Line x1={padding} y1={0} x2={padding} y2={graphHeight} stroke="#aaa" />
                 <Line x1={padding} y1={graphHeight} x2={graphWidth} y2={graphHeight} stroke="#aaa" />
 
-                
                 {[1, 2, 3, 4, 5].map((level) => {
                   const y = graphHeight - ((level - 1) / (5 - 1)) * (graphHeight - padding) - yAxisOffset;
                   return (
@@ -346,52 +297,17 @@ export function Content() {
                   );
                 })}
 
-                {/* Line Path */}
+                {renderXAxisLabels()}
+
                 <Path d={graphPath} fill="none" stroke="#715868" strokeWidth={2} />
-
-                {/* Points */}
-                {points.map((point, index) => {
-                  const y = graphHeight - ((point.level - 1) / (5 - 1)) * (graphHeight - padding) - yAxisOffset;
-                  return (
-                    <G key={index}>
-                      <Circle cx={point.x} cy={y} r={4} fill="#715868" />
-                      <SvgText x={point.x} y={graphHeight + 15} fontSize="10" textAnchor="middle">
-                        {point.label}
-                      </SvgText>
-                    </G>
-                  );
-                })}
-
-                {tooltip && (
-                  <>
-                    <Line
-                      x1={tooltip.x}
-                      y1={0}
-                      x2={tooltip.x}
-                      y2={graphHeight}
-                      stroke="gray"
-                      strokeWidth={1}
-                      strokeDasharray="4 4"
-                    />
-                    <Circle cx={tooltip.x} cy={tooltip.y-4} r={6} fill="red" />
-                  </>
-                )}
+                {points.map((point, index) => (
+                  <G key={index}>
+                    <Circle cx={point.x} cy={point.y-2} r={2} fill="#715868" />
+                  </G>
+                ))}
               </Svg>
 
-              {/* Tooltip */}
-              {tooltip && (
-                <View
-                  style={[
-                    styles.tooltip,
-                    {
-                      left: tooltip.x - 50,
-                      top: tooltip.y - 40,
-                    },
-                  ]}
-                >
-                  <Text style={styles.tooltipText}>{tooltip.value}</Text>
-                </View>
-              )}
+
               <Text style={styles.selectedDateText}>{formatDate(selectedDate)}</Text>
             </View>
           )}
@@ -479,27 +395,7 @@ const styles = StyleSheet.create({
   noDataText: {
     fontSize: 16,
     color: '#999999',
-  },
-  tooltip: {
-    position: 'absolute',
-  backgroundColor: '#444',
-  paddingVertical: 5,
-  paddingHorizontal: 10,
-  borderRadius: 8,
-  zIndex: 9999, // Ensure it appears above the graph
-  alignItems: 'center',
-  justifyContent: 'center',
-  shadowColor: '#000', // Add shadow for better visibility
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.3,
-  shadowRadius: 4,
-  },
-  
-  tooltipText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },  
+  }, 
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
