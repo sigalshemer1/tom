@@ -98,12 +98,14 @@ const Home = ({ navigation }) => {
       }, 100);
     }
   }, [currentPlayer]);
+  
+  
 
   const handlePlaybackStatusUpdateA = (status) => {
     if (status.isLoaded) {
       const remainingTime = status.durationMillis - status.positionMillis;
   
-      if (remainingTime <= 4000 && !isButtonVisibleEarly) {
+      if (remainingTime <= 5000 && !isButtonVisibleEarly) {
         setIsButtonVisibleEarly(true); // Show button in the last 4 seconds
       }
   
