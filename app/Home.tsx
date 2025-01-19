@@ -14,8 +14,8 @@ import { useAppContext } from './AppContext';
 import { useIsFocused } from '@react-navigation/native';
 import logo from '../assets/images/logo.png';
 
-const birdsA = require('./videos/birds.mp4');
-const birdsC = require('./videos/birdsC.mp4');
+const birdsA = require('../assets/videos/birds.mp4');
+const birdsC = require('../assets/videos/birdsC.mp4');
 
 const Home = ({ navigation }) => {
   const db = useSQLiteContext();

@@ -108,7 +108,7 @@ export function Content() {
       const formattedEndDate = formatDateToFetch(new Date(endDate));
   
       const result = await db.getAllAsync(
-        'SELECT * FROM thoughts WHERE created BETWEEN ? AND ?;',
+        'SELECT * FROM thoughts WHERE created BETWEEN ? AND ? ORDER BY created ASC;',
         [formattedStartDate, formattedEndDate]
       );
       return result;
@@ -120,7 +120,7 @@ export function Content() {
 
   const fetchAllThoughts = async () => {
     try {
-      const result = await db.getAllAsync('SELECT * FROM thoughts;'); // Fetch all thoughts
+      const result = await db.getAllAsync('SELECT * FROM thoughts ORDER BY created ASC;'); // Fetch all thoughts
       updateHighlightedDates(result); // Update highlighted dates for all available data
     } catch (error) {
       console.error('Error fetching all thoughts:', error);
@@ -150,25 +150,7 @@ export function Content() {
       </Modal>
     );
   };
-  
 
-  // Function to update highlighted dates
-  // const updateHighlightedDates = (data) => {
-  //   const highlighted = data.reduce((acc, item) => {
-  //     const date = item.created.includes('T') ? item.created.split('T')[0] : item.created.split(' ')[0];
-  //     if (!acc[date]) { 
-  //       acc[date] = { selected: true, marked: true, selectedColor: '#bf4da2' };
-  //     }
-  //     return acc;
-  //   }, {});
-  
-  //   setHighlightedDates((prev) => {
-  //     if (JSON.stringify(prev) !== JSON.stringify(highlighted)) {
-  //       return highlighted; // Update only if there's a difference
-  //     }
-  //     return prev; // No update needed
-  //   });
-  // };
   
   const updateHighlightedDates = (data) => {
     const highlighted = data.reduce((acc, item) => {
@@ -217,7 +199,7 @@ const points = thoughts.map((thought) => {
 const yAxisOffset = 4;
 const graphPath = points
   .map((point, index) => {
-    const adjustedY = graphHeight - ((point.level - 1) / (5 - 1)) * (graphHeight - padding) - yAxisOffset;
+    const adjustedY = graphHeight - ((point.level - 1) / (5 - 1)) * (graphHeight - padding) - yAxisOffset +2;
     return index === 0 ? `M${point.x},${adjustedY}` : `L${point.x},${adjustedY}`;
   })
   .join(' ');
@@ -225,11 +207,11 @@ const graphPath = points
 // Render the x-axis labels for 24 hours
 const renderXAxisLabels = () => {
   const labels = [];
-  for (let i = 0; i <= 24; i += 3) { // Display labels every 3 hours
+  for (let i = 0; i <= 24; i += 2) { // Display labels every 3 hours
     const x = ((i / 24) * (graphWidth - padding * 2)) + padding;
     labels.push(
       <SvgText key={i} x={x} y={graphHeight + 15} fontSize="10" textAnchor="middle" fill="#000">
-        {i} {/* Display only the hour */}
+        {i} 
       </SvgText>
     );
   }

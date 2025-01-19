@@ -6,12 +6,18 @@
     "orientation": "portrait",
     "icon": "./assets/images/app-icon.png",
     "scheme": "myapp",
+    "assetBundlePatterns": ["**/*"],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "main": "node_modules/expo-router/entry",
     "ios": {
       "supportsTablet": true,
-      "icon": "./assets/images/app-icon.png"  
+      "icon": "./assets/images/app-icon.png",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
     }, 
     "android": {
       "adaptiveIcon": {

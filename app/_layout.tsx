@@ -179,6 +179,11 @@ async function migrateDbIfNeeded(db: SQLiteDatabase) {
       `);
     currentDbVersion = 1;
   }
+  //TO DELETE!!!
+  await db.execAsync(`
+    PRAGMA journal_mode = 'wal';
+    CREATE TABLE IF NOT EXISTS isFirst (id INTEGER PRIMARY KEY NOT NULL, first BOLEAN DEFAULT fALSE);
+    `);
   
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
