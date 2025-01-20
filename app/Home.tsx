@@ -34,35 +34,8 @@ const Home = ({ navigation }) => {
   const playerA = useRef<Video>(null);
   const playerC = useRef<Video>(null);
 
-  const checkFirstTime = async () => {
-    try {
-      const result = await db.getAllAsync('SELECT * FROM isFirst;');
-      if (result.length === 0) {
-        await db.runAsync('INSERT INTO isFirst (first) VALUES (false)');
-        setIsFirstTime(true);
-      } else {
-        setIsFirstTime(false);
-      }
-    } catch (error) {
-      console.error('Error checking isFirstTime:', error);
-      setIsFirstTime(false);
-    }
-  };
 
-  const resetIntroLogic = async () => {
-    try {
-      setCurrentPlayer('playerA');
-      await db.runAsync('DELETE FROM isFirst');
-      setIsFirstTime(true);
-      setIsIntroPlaying(true);
-      if (playerA.current) {
-        await playerA.current.playAsync();
-      }
-      setResetIntroFlag(false); // Reset the context flag after handling
-    } catch (error) {
-      console.error('Error resetting intro:', error);
-    }
-  };
+  
 
   useEffect(() => {
     // Handle first-time logic and resetIntroFlag
@@ -79,29 +52,83 @@ const Home = ({ navigation }) => {
   }, [resetIntroFlag, isFirstTime]);
 
 
+  useEffect(() => {
+    const preloadPlayerC = async () => {
+      if (playerC.current) {
+        await playerC.current.loadAsync(birdsC, {}, false); // Preload playerC in the background
+      }
+    };
+  
+    preloadPlayerC(); // Preload PlayerC on component mount
+  }, []);
+  
+
+  //Hide/show the nav bar at the bottom
+  useEffect(() => {
+    if (isFocused && isIntroPlaying) {
+      navigation.setOptions({ tabBarStyle: { display: 'none' } });
+    } else {
+      navigation.setOptions({ tabBarStyle: { display: 'flex' } });
+    }
+  }, [isFocused, isIntroPlaying, navigation]);
+
+  
+  const checkFirstTime = async () => {
+    try {
+      const result = await db.getAllAsync('SELECT * FROM isFirst;');
+      if (result.length === 0) {
+        await db.runAsync('INSERT INTO isFirst (first) VALUES (false)');
+        setIsFirstTime(true);
+      } else {
+        setIsFirstTime(false);
+      }
+    } catch (error) {
+      console.error('Error checking isFirstTime:', error);
+      setIsFirstTime(false);
+    }
+  };
+
+
+  const resetIntroLogic = async () => {
+    try {
+      setCurrentPlayer('playerA');
+      await db.runAsync('DELETE FROM isFirst');
+      setIsFirstTime(null);
+      setIsIntroPlaying(true);
+      if (playerA.current) {
+        await playerA.current.playAsync();
+      }
+      setResetIntroFlag(false);
+    } catch (error) {
+      console.error('Error resetting intro:', error);
+    }
+  };
+
   const replacePlayer = useCallback(async () => {
     if (currentPlayer === 'playerA' && playerA.current) {
-      if (playerC.current) {
-        await playerC.current.loadAsync(birdsC, {}, false);
-      }
-  
       setCurrentPlayer('playerC');
       if (playerC.current) {
-        await playerC.current.playAsync();
+        await playerC.current.playAsync(); // Start Player C
       }
-  
-      setIsButtonVisible(false); // Hide the button when playerC starts
       setTimeout(async () => {
         if (playerA.current) {
-          await playerA.current.unloadAsync();
+          await playerA.current.unloadAsync(); // Unload Player A after the transition
         }
       }, 100);
     }
   }, [currentPlayer]);
-  
-  
 
+
+  const handleReadyForDisplayA = useCallback(() => {
+    if (playerC.current) {
+      // Preload Player C in the background
+      playerC.current.loadAsync(birdsC, { shouldPlay: false });
+    }
+  }, []);
+
+  
   const handlePlaybackStatusUpdateA = (status) => {
+    // console.log('Player A Status:', status);
     if (status.isLoaded) {
       const remainingTime = status.durationMillis - status.positionMillis;
   
@@ -116,6 +143,7 @@ const Home = ({ navigation }) => {
   };
   
   const handlePlaybackStatusUpdateC = (status) => {
+    // console.log('Player C Status:', status);
     if (status.didJustFinish && currentPlayer === 'playerC') {
       setIsIntroPlaying(false); // End the intro
       setIsButtonVisible(false); // Hide button after playerC finishes
@@ -137,13 +165,7 @@ const Home = ({ navigation }) => {
     }
   };
 
-  useEffect(() => {
-    if (isFocused && isIntroPlaying) {
-      navigation.setOptions({ tabBarStyle: { display: 'none' } });
-    } else {
-      navigation.setOptions({ tabBarStyle: { display: 'flex' } });
-    }
-  }, [isFocused, isIntroPlaying, navigation]);
+ 
 
   if (isIntroPlaying) {
     return (
@@ -154,11 +176,18 @@ const Home = ({ navigation }) => {
               <Video
                 ref={playerA}
                 source={birdsA}
-                style={styles.video}
+                style={[
+                  styles.video,
+                  currentPlayer === 'playerA' ? { opacity: 1 } : { opacity: 0 },
+                ]}
                 resizeMode="cover"
-                shouldPlay
+                shouldPlay={currentPlayer === 'playerA'}
                 isLooping={false}
                 onPlaybackStatusUpdate={handlePlaybackStatusUpdateA}
+                onReadyForDisplay={() => {
+                  console.log('Player A is ready for display');
+                  handleReadyForDisplayA
+                }}
               />
             )}
             {currentPlayer === 'playerC' && (
@@ -170,9 +199,12 @@ const Home = ({ navigation }) => {
                   currentPlayer === 'playerC' ? { opacity: 1 } : { opacity: 0 },
                 ]}
                 resizeMode="cover"
-                shouldPlay
+                shouldPlay={currentPlayer === 'playerC'}
                 isLooping={false}
                 onPlaybackStatusUpdate={handlePlaybackStatusUpdateC}
+                onReadyForDisplay={() => {
+                  console.log('Player C is ready for display');
+                }}
               />
             )}
             {(isButtonVisible || isButtonVisibleEarly) && (
