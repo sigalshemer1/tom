@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Video } from 'expo-av';
 import { useSQLiteContext } from 'expo-sqlite';
 import {
   StyleSheet,
@@ -10,55 +10,60 @@ import {
   SafeAreaView,
   Image,
 } from 'react-native';
-import { InteractionManager } from 'react-native';
 import { useAppContext } from './AppContext';
 import { useIsFocused } from '@react-navigation/native';
 import logo from '../assets/images/logo.png';
-import birdsA from '../assets/videos/birds.mp4';
-import birdsC from '../assets/videos/birdsC.mp4';
+
+const birdsA = require('../assets/videos/birds.mp4');
+const birdsC = require('../assets/videos/birdsC.mp4');
 
 const Home = ({ navigation }) => {
-  const playerA = useVideoPlayer(birdsA);
-  const playerC = useVideoPlayer(birdsC);
-
   const db = useSQLiteContext();
   const isFocused = useIsFocused();
-  const {
-    resetIntroFlag,
+  const { 
+    resetIntroFlag, 
     setResetIntroFlag,
-    isFirstTime,
+    isFirstTime, 
     setIsFirstTime,
-    isButtonVisible,
-    setIsButtonVisible,
+    isButtonVisible, 
+    setIsButtonVisible 
   } = useAppContext();
-
   const [isIntroPlaying, setIsIntroPlaying] = useState(false);
+  const [currentPlayer, setCurrentPlayer] = useState<'playerA' | 'playerC'>('playerA');
   const [isButtonVisibleEarly, setIsButtonVisibleEarly] = useState(false);
-  const [currentPlayer, setCurrentPlayer] = useState(playerA);
+  const playerA = useRef<Video>(null);
+  const playerC = useRef<Video>(null);
 
-  // Initialize players and handle playback on the main thread
-  const safeExecutePlayerAction = (player, action) => {
-    InteractionManager.runAfterInteractions(() => {
-      if (player) {
-        action(player);
-      }
-    });
-  };
+
+  
 
   useEffect(() => {
+    // Handle first-time logic and resetIntroFlag
     if (resetIntroFlag) {
       resetIntroLogic();
     } else if (isFirstTime === null) {
       checkFirstTime();
     } else if (isFirstTime) {
       setIsIntroPlaying(true);
-      safeExecutePlayerAction(playerA, (player) => {
-        player.play(); 
-      });
+      if (playerA.current) {
+        playerA.current.playAsync();
+      }
     }
   }, [resetIntroFlag, isFirstTime]);
 
 
+  useEffect(() => {
+    const preloadPlayerC = async () => {
+      if (playerC.current) {
+        await playerC.current.loadAsync(birdsC, {}, false); // Preload playerC in the background
+      }
+    };
+  
+    preloadPlayerC(); // Preload PlayerC on component mount
+  }, []);
+  
+
+  //Hide/show the nav bar at the bottom
   useEffect(() => {
     if (isFocused && isIntroPlaying) {
       navigation.setOptions({ tabBarStyle: { display: 'none' } });
@@ -66,59 +71,6 @@ const Home = ({ navigation }) => {
       navigation.setOptions({ tabBarStyle: { display: 'flex' } });
     }
   }, [isFocused, isIntroPlaying, navigation]);
-
-
-  useEffect(() => {
-    let intervalId;
-    if (playerA && currentPlayer === playerA) {
-      intervalId = setInterval(() => {
-        safeExecutePlayerAction(playerA, (player) => {
-          const remainingTime = player.duration - player.currentTime;
-          if (remainingTime <= 6 && remainingTime > 0 && !isButtonVisible) {
-            setIsButtonVisible(true); // Show button only for playerA
-          }
-        });
-      }, 500); // Check every 500ms
-    }
-    return () => {
-      if (intervalId) clearInterval(intervalId); // Cleanup interval
-    };
-  }, [playerA, isButtonVisible, currentPlayer]);
-
-
-  useEffect(() => {
-    let intervalId;
-    if (playerC && currentPlayer === playerC) {
-      intervalId = setInterval(() => {
-        safeExecutePlayerAction(playerC, (player) => {
-          const remainingTime = player.duration - player.currentTime;
-          if (remainingTime <= 1 && isIntroPlaying) {
-            setIsIntroPlaying(false); 
-          }
-        });
-      }, 500); 
-    }
-    return () => {
-      if (intervalId) clearInterval(intervalId); // Cleanup interval
-    };
-  }, [playerC, currentPlayer, isIntroPlaying]);
-
-
-  
-  const resetToDefaults = useCallback(() => {
-    setIsIntroPlaying(false);
-    setIsButtonVisible(false);
-    setCurrentPlayer(playerA); // Default player
-    safeExecutePlayerAction(playerA, (player) => player.pause());
-    safeExecutePlayerAction(playerC, (player) => player.pause());
-  }, [playerA, playerC]);
-
-
-  useEffect(() => {
-    if (!isIntroPlaying) {
-      resetToDefaults(); // Reset when `isIntroPlaying` is false
-    }
-  }, [isIntroPlaying, resetToDefaults]);
 
   
   const checkFirstTime = async () => {
@@ -136,16 +88,16 @@ const Home = ({ navigation }) => {
     }
   };
 
+
   const resetIntroLogic = async () => {
     try {
-      safeExecutePlayerAction(playerA, (player) => player.pause());
-      setCurrentPlayer(playerA);
-      safeExecutePlayerAction(playerA, (player) => {
-        player.play(); // Start playing playerA when reset
-      });
+      setCurrentPlayer('playerA');
       await db.runAsync('DELETE FROM isFirst');
       setIsFirstTime(null);
       setIsIntroPlaying(true);
+      if (playerA.current) {
+        await playerA.current.playAsync();
+      }
       setResetIntroFlag(false);
     } catch (error) {
       console.error('Error resetting intro:', error);
@@ -153,28 +105,56 @@ const Home = ({ navigation }) => {
   };
 
   const replacePlayer = useCallback(async () => {
-    if (!playerA || !playerC) {
-      console.error('Players are not initialized');
-      return;
+    if (currentPlayer === 'playerA' && playerA.current) {
+      setCurrentPlayer('playerC');
+      if (playerC.current) {
+        await playerC.current.playAsync(); // Start Player C
+      }
+      setTimeout(async () => {
+        if (playerA.current) {
+          await playerA.current.unloadAsync(); // Unload Player A after the transition
+        }
+      }, 100);
     }
-    const nextPlayer = currentPlayer === playerA ? playerC : playerA;
-    safeExecutePlayerAction(currentPlayer, (player) => player.pause());
-    setCurrentPlayer(nextPlayer);
-  
-    if (currentPlayer === playerA) {
-      safeExecutePlayerAction(playerC, (player) => player.play());
-    } else {
-      setIsIntroPlaying(false); // Stop showing the videos
-      setIsButtonVisible(false); // Ensure the button is hidden
-    }
-  }, [currentPlayer, playerA, playerC]);
-  
+  }, [currentPlayer]);
 
 
+  const handleReadyForDisplayA = useCallback(() => {
+    if (playerC.current) {
+      // Preload Player C in the background
+      playerC.current.loadAsync(birdsC, { shouldPlay: false });
+    }
+  }, []);
+
+  
+  const handlePlaybackStatusUpdateA = (status) => {
+    // console.log('Player A Status:', status);
+    if (status.isLoaded) {
+      const remainingTime = status.durationMillis - status.positionMillis;
+  
+      if (remainingTime <= 5000 && !isButtonVisibleEarly) {
+        setIsButtonVisibleEarly(true); // Show button in the last 4 seconds
+      }
+  
+      if (status.didJustFinish) {
+        replacePlayer(); // Switch to playerC when playerA finishes
+      }
+    }
+  };
+  
+  const handlePlaybackStatusUpdateC = (status) => {
+    // console.log('Player C Status:', status);
+    if (status.didJustFinish && currentPlayer === 'playerC') {
+      setIsIntroPlaying(false); // End the intro
+      setIsButtonVisible(false); // Hide button after playerC finishes
+      setIsButtonVisibleEarly(false); // Reset early visibility for the next playback
+    }
+  };
+  
   const handleButtonPress = () => {
-    setIsButtonVisible(false); // Hide the button when pressed
+    setIsButtonVisible(false); 
     setIsButtonVisibleEarly(false);
-    replacePlayer();
+    replacePlayer(); 
   };
 
   const insertThought = async (level) => {
@@ -185,18 +165,48 @@ const Home = ({ navigation }) => {
     }
   };
 
+ 
+
   if (isIntroPlaying) {
     return (
       <ScrollView contentContainerStyle={styles.scrollView}>
         <View style={styles.root}>
           <View style={styles.contentContainer}>
-            <VideoView
-              player={currentPlayer}
-              style={styles.video}
-              nativeControls={false}
-              allowsFullscreen
-              allowsPictureInPicture
-            />
+            {currentPlayer === 'playerA' && (
+              <Video
+                ref={playerA}
+                source={birdsA}
+                style={[
+                  styles.video,
+                  currentPlayer === 'playerA' ? { opacity: 1 } : { opacity: 0 },
+                ]}
+                resizeMode="cover"
+                shouldPlay={currentPlayer === 'playerA'}
+                isLooping={false}
+                onPlaybackStatusUpdate={handlePlaybackStatusUpdateA}
+                onReadyForDisplay={() => {
+                  console.log('Player A is ready for display');
+                  handleReadyForDisplayA
+                }}
+              />
+            )}
+            {currentPlayer === 'playerC' && (
+              <Video
+                ref={playerC}
+                source={birdsC}
+                style={[
+                  styles.video,
+                  currentPlayer === 'playerC' ? { opacity: 1 } : { opacity: 0 },
+                ]}
+                resizeMode="cover"
+                shouldPlay={currentPlayer === 'playerC'}
+                isLooping={false}
+                onPlaybackStatusUpdate={handlePlaybackStatusUpdateC}
+                onReadyForDisplay={() => {
+                  console.log('Player C is ready for display');
+                }}
+              />
+            )}
             {(isButtonVisible || isButtonVisibleEarly) && (
               <TouchableOpacity style={styles.button} onPress={handleButtonPress}>
                 <Text style={styles.buttonText}>Shake me</Text>
@@ -291,10 +301,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
   button: {
     position: 'absolute',
